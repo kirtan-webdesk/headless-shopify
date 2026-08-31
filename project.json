@@ -63,7 +63,10 @@
       "third_party_integrations_beyond_ga_gtm_recharge — PM Agent G0 question 6 — explicitly skipped for now (2026-08-31). Not assumed to be zero — remains an open question.",
       "carbrite_com_domain_blocklist_decision — deferred at SOW stage (Rewrite 5) and again at G0 (2026-08-31) — client's/sales' explicit choice to skip for now, not a true gap",
       "production_store_swap — dev/test store (wds55) confirmed intentional for build phase; PUBLIC_STORE_DOMAIN + API tokens in .env MUST be swapped to the real Car Brite store before G6 pre-launch. Track this explicitly so it is not forgotten at launch.",
-      "customer_privacy_consent_setup — Hydrogen scaffold logs a console error: [h2:error:Analytics.Provider] consent.checkoutDomain not set. Needs Customer Privacy / checkout domain configured in Shopify admin. Pre-existing scaffold requirement, not introduced by this session's changes."
+      "customer_privacy_consent_setup — Hydrogen scaffold logs a console error: [h2:error:Analytics.Provider] consent.checkoutDomain not set. Needs Customer Privacy / checkout domain configured in Shopify admin. Pre-existing scaffold requirement, not introduced by this session's changes.",
+      "pdp_no_design_reference — confirmed again 2026-08-31: Design/Design/ contains ONLY Homepage Design/ and Collection page Design/ folders. No product-page mockup exists anywhere. PDP is styled consistently with the established brand system (navy/teal/purple, Halogen) but is not \"matched to a reference\" because none exists for it -- flagged explicitly, not silently assumed equivalent to home/collection.",
+      "shop_nav_mega_menu_not_built — \"The Routine\" 5-step block (Design/Design/*/​*.html, positioned before <main> on both reference pages) is a Shop-nav mega-menu dropdown, confirmed by: it does not appear in either static mockup JPG, and doesn't appear in the initial-load screenshot of either page. Removed from being a visible section (was wrongly built as one on the collection page). NOT yet built as an actual hover/click mega-menu -- this is a real gap in S2.3 (nav), tracked here rather than silently left implied-done.",
+      "social_proof_images_unused — social-1.jpg..social-4.jpg were copied into public/images/ for the homepage testimonials section but the built Testimonials component uses text-only cards (matching what the reference DOM exposes for that section -- it wasn't clear the images belonged there specifically vs. elsewhere). Worth confirming placement before final QA."
     ],
     "clarification_responses": [
       {
@@ -603,6 +606,14 @@
       "impact": "low",
       "mitigation": "scripts/upload-hero-image.mjs is written and ready -- just needs the token's scopes updated (add write_files) in the custom app config, then re-run it and swap _index.jsx back to homepage.hero_image. Text/CTA content on the homepage IS already fully Metaobject-editable; only the photo itself is the gap.",
       "status": "open"
+    },
+    {
+      "id": "R8",
+      "description": "First build pass (S2.2, S3.1) was done against an incomplete reading of the reference: only the interactive HTML files were checked, and only their visible-on-load content. Two static pixel mockups (Pearls_HP.jpg, Pearls_CP.jpg) were not examined until the user flagged the build as not matching. They revealed: (1) \"The Routine\" 5-step block is a Shop-nav mega-menu, not a page section -- it had been wrongly built as a permanent visible section on the collection page; (2) the homepage was missing 6 of 7 real sections (pod system, brand/stats, subscription, testimonials, FAQ, newsletter) plus a real footer; (3) a page-wide bug where body had no explicit background/color-scheme, making dark text invisible on several sections whenever the browser used a dark color-scheme preference.",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "RESOLVED 2026-08-31 -- see audit_log entries this session. Root cause going forward: always check ALL files in a reference folder (not just the most obviously named one) and scroll/extract full-page DOM before treating any single screenshot as complete.",
+      "status": "mitigated"
     }
   ],
   "bugs": [],
@@ -1110,6 +1121,30 @@
         ],
         "not_fixed_yet": "hero_image Metaobject field left unset -- Admin API token lacks write_files scope, upload script written and ready (scripts/upload-hero-image.mjs) but blocked on a scope grant, tracked as risks[R8]. Static asset fallback used in the meantime, clearly commented in code as temporary.",
         "verification": "Rebuilt clean (exit 0) after each fix, re-served both the reference and the build side by side, pulled getComputedStyle() from both and compared numerically (not just visual screenshots) for font-family, font-size, background gradients, border-radius, and confirmed via document.fonts that Manrope actually loads post-fix.",
+        "project_version_before": 16,
+        "project_version_after": 17
+      }
+    },
+    {
+      "timestamp": "2026-08-31T23:00:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "mockup_fidelity_recheck_and_rebuild",
+      "details": {
+        "trigger": "User: \"reference mockup design is not proper so can you recheck and fix it Home Page mockup and collection and product page mockup and make same as reference mockups.\"",
+        "discovery": "Found two static pixel mockups never previously examined: Design/Design/Homepage Design/Mockup/Pearls_HP.jpg and .../Collection page Design/Mockups/Pearls_CP.jpg. Comparing against them (not just the interactive HTML) revealed the first build pass was significantly incomplete -- see risks[R8].",
+        "homepage_rebuild": "app/routes/_index.jsx rewritten from 3 sections (announcement bar, hero, generic recommended-products) to 8: announcement bar, hero (+ stats row), pod system (5 real-named products + bundle bar), brand/stats section, subscription section, testimonials (4 social + 3 review cards), FAQ (6 items), newsletter (+ stats grid). Copy extracted verbatim from the reference HTML's live DOM (read_page), not approximated from the compressed JPG.",
+        "collection_fix": "Removed the incorrectly-added \"RoutineStrip\" visible section from both collections.all.jsx and collections.$handle.jsx (it's a mega-menu, confirmed absent from both reference JPGs). Fixed product card Amazon link to a real secondary button (was a plain text link). Fixed Shop-by-surface to use real photography (exterior.jpg/wheels-tires.jpg/interior.jpg) instead of flat color cards. Fixed About-collection to a real two-column layout. Added the newsletter stats grid (Free pod/4.9★/1mo/0) to match the reference. Set collection page background to the reference's pale mint (#eaf7f7).",
+        "footer_rebuild": "components/Footer.jsx rewritten from the bare scaffold default (a single \"Search / Privacy Choices\" link) to the full reference footer: PEARLS brand block, 4 columns (Shop/Learn/Company/Help), real Shopify policy links folded into Help, copyright bar. Applies site-wide (used by every page).",
+        "page_wide_bug_found_and_fixed": "body had no explicit background/color/color-scheme set. On a browser with a dark color-scheme preference, this made several sections' dark-on-transparent text (e.g. brand-section feature list) render as dark text on a black canvas -- unreadable. Fixed by setting body background/color/color-scheme:light explicitly. This was a real, previously-unnoticed accessibility bug, not just a mockup-fidelity issue -- would have affected every page, every viewer with OS/browser dark mode on.",
+        "verification_method": "Real browser, not assumption. Hit a genuine tool quirk: screenshots consistently failed/returned stale frames after a scroll action specifically (confirmed via computed getBoundingClientRect/backgroundColor checks showing correct values while screenshots stayed black) -- worked around by resizing the viewport taller instead of scrolling, which captures cleanly. Verified full homepage (all 8 sections + footer), full collection page (grid + all 5 lower sections + footer), and confirmed no PDP regression from the color-scheme fix.",
+        "assets_added": [
+          "public/images/pod-1..5.png",
+          "public/images/social-1..4.jpg (copied, not yet used)",
+          "public/images/exterior.jpg",
+          "public/images/interior.jpg",
+          "public/images/wheels-tires.jpg"
+        ],
         "project_version_before": 16,
         "project_version_after": 17
       }

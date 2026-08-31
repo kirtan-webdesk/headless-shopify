@@ -74,6 +74,17 @@ S2.1 → `done`, S2.2 → `qa` (built and verified, but not self-marked `done` �
 
 **M2 + M3 core build work is now largely complete, pending QA sign-off across S2.1/S2.2/S3.1/S3.2.** Given S3.1's scope expansion (risk R7), actual hours burned should be reconciled against the 45h + 9h feedback buffer soon rather than left for later.
 
+**Then: user said the build didn't match the reference mockups — recheck and fix Home/Collection/Product.** They were right. First pass only checked the interactive HTML files, and only what was visible without scrolling. Two static pixel mockups (`Pearls_HP.jpg`, `Pearls_CP.jpg`) had never been opened. Comparing against them found real gaps, not just polish:
+
+1. **"The Routine" 5-step block is a Shop-nav mega-menu, not a page section** — absent from both mockup JPGs. Had been wrongly built as a permanent visible section on the collection page. Removed. Building it as an actual mega-menu is still open (new gap, `shop_nav_mega_menu_not_built`).
+2. **Homepage was missing 6 of 7 real sections** — only had announcement bar + hero + a generic scaffold "recommended products" block. Rebuilt `app/routes/_index.jsx` with the real sections: pod system (5 named products + bundle bar), brand/stats, subscription, testimonials, FAQ, newsletter — copy extracted verbatim from the reference HTML's live DOM.
+3. **Footer was still the bare scaffold default** (one "Search" link). Rebuilt to the real PEARLS footer (4 columns + policy links), site-wide.
+4. **A real, previously-unnoticed accessibility bug**: `body` had no explicit background/color-scheme, so on a browser with dark mode preferred, several sections' dark text rendered on a black canvas — unreadable. Fixed with an explicit `color-scheme: light`. This wasn't just a mockup-mismatch, it was broken for real users.
+5. Collection page also fixed: Amazon link is now a real secondary button (was plain text), Shop-by-surface uses real photography (was flat color cards), About-collection is now two-column, newsletter got its stats grid, page background matches the reference's pale mint.
+6. **PDP still has no reference mockup anywhere** — confirmed again by re-listing the whole `Design/` folder. Left styled consistently with the system; flagged explicitly rather than claimed matched to something that doesn't exist.
+
+All verified in a real browser (worked around a scroll-triggered screenshot bug in the tool by resizing viewport instead of scrolling). `project.json` now at version 17.
+
 **Then: "the design is not proper, recheck and fix it."** Didn't guess at what was wrong — re-served the reference HTML and pulled exact `getComputedStyle()` values (fonts, gradients, radii) from its live DOM, compared numerically against the build. Found and fixed real, verifiable gaps:
 - Header was scaffold-default white; reference is translucent navy blending into the hero — fixed globally.
 - Hero gradient was an oversimplified 2-stop approximation; replaced with the real 3-layer gradient.

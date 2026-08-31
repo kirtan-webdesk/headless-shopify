@@ -21,6 +21,9 @@
 
 body {
   font-family: var(--font-body);
+  background: var(--color-light);
+  color: var(--color-dark);
+  color-scheme: light;
 }
 
 @font-face {
@@ -335,8 +338,87 @@ button.reset:hover:not(:has(> *)) {
 * --------------------------------------------------
 */
 .footer {
-  background: var(--color-dark);
+  background: var(--color-navy);
+  color: var(--color-light);
   margin-top: auto;
+  padding: 3rem 1.5rem 1.5rem;
+  @media (min-width: 45em) {
+    padding-inline: 4rem;
+  }
+}
+
+.footer-brand {
+  margin-bottom: 2.5rem;
+}
+
+.footer-logo {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.5rem;
+}
+
+.footer-tagline-eyebrow {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 0.4rem;
+}
+
+.footer-tagline {
+  max-width: 26rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+}
+
+.footer-columns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+  @media (min-width: 45em) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.footer-column h3 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 1rem;
+}
+
+.footer-column ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.footer-column a {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-bottom p {
+  margin: 0;
 }
 
 .footer-menu {
@@ -640,6 +722,11 @@ button.reset:hover:not(:has(> *)) {
 .collection-page {
   display: flex;
   flex-direction: column;
+  background: #eaf7f7;
+}
+
+.collection-page .collection-grid {
+  background: transparent;
 }
 
 .section-eyebrow {
@@ -941,11 +1028,14 @@ button.reset:hover:not(:has(> *)) {
 }
 
 .collection-card-amazon {
+  display: block;
   text-align: center;
   font-size: 0.75rem;
-  color: #6b7280;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--color-navy);
+  text-decoration: none;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 0.5rem;
 }
 
 /* Shop by surface / about / newsletter */
@@ -956,6 +1046,31 @@ button.reset:hover:not(:has(> *)) {
   padding-inline: 1.5rem;
   @media (min-width: 45em) {
     padding-inline: 4rem;
+  }
+}
+
+.newsletter-signup {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  @media (min-width: 45em) {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.about-collection {
+  display: grid;
+  gap: 1.5rem;
+  @media (min-width: 45em) {
+    grid-template-columns: 1fr 1.4fr;
+  }
+}
+
+.about-collection > div {
+  display: grid;
+  gap: 1rem;
+  @media (min-width: 55em) {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -989,10 +1104,15 @@ button.reset:hover:not(:has(> *)) {
 .surface-card {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  justify-content: flex-end;
+  gap: 0.15rem;
   padding: 1.5rem;
+  min-height: 14rem;
   border-radius: 6px;
-  background: var(--color-navy);
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: multiply;
+  background-color: rgba(21, 25, 73, 0.55);
   color: var(--color-light);
   text-decoration: none;
 }
@@ -1008,7 +1128,21 @@ button.reset:hover:not(:has(> *)) {
 }
 
 .newsletter-signup {
-  background: #f9fafb;
+  background: var(--color-navy);
+  color: var(--color-light);
+}
+
+.newsletter-signup h2 {
+  color: var(--color-light);
+}
+
+.newsletter-signup h2 em {
+  color: var(--color-teal);
+  font-style: italic;
+}
+
+.newsletter-signup > p {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .newsletter-form {
@@ -1294,4 +1428,567 @@ button.reset:hover:not(:has(> *)) {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+/*
+* --------------------------------------------------
+* Homepage -- full section rebuild 2026-08-31
+* Rechecked against Design/Design/Homepage Design/Mockup/Pearls_HP.jpg
+* (the actual pixel mockup, not just the interactive HTML) after the first
+* pass missed everything below the hero.
+* --------------------------------------------------
+*/
+
+.hero-stats {
+  display: flex;
+  gap: 2rem;
+  margin: 2rem 0 0;
+  padding: 1.5rem 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.hero-stats dt {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.75rem;
+  color: var(--color-teal);
+}
+
+.hero-stats dd {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+button.hero-cta {
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Pod system */
+.pod-system {
+  background: #eaf7f7;
+  padding-block: 3rem;
+  padding-inline: 1.5rem;
+  @media (min-width: 45em) {
+    padding-inline: 4rem;
+  }
+}
+
+.pod-system h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  margin: 0 0 0.75rem;
+}
+
+.pod-system h2 em {
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-color: var(--color-purple);
+}
+
+.pod-system-intro {
+  max-width: 36rem;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+.pod-system-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin: 0 0 2.5rem;
+  @media (min-width: 55em) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.pod-system-stats dt {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.pod-system-stats dd {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.pod-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  @media (min-width: 45em) {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.pod-card {
+  background: var(--color-light);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 1rem;
+}
+
+.pod-card-media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(160deg, var(--color-purple), var(--color-navy));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pod-card-media img {
+  width: 65%;
+  height: auto;
+  object-fit: contain;
+}
+
+.pod-card .collection-card-category,
+.pod-card .collection-card-title,
+.pod-card .collection-card-description,
+.pod-card .collection-card-price,
+.pod-card .collection-card-actions {
+  padding-inline: 0.85rem;
+}
+
+.pod-card .collection-card-price {
+  font-weight: 700;
+  margin: 0.5rem 0;
+  padding-inline: 0.85rem;
+}
+
+.pod-bundle-bar {
+  background: var(--color-navy);
+  color: var(--color-light);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+}
+
+.pod-bundle-eyebrow {
+  width: 100%;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+  margin: 0;
+}
+
+.pod-bundle-bar h3 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.pod-bundle-subtext {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pod-bundle-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.pod-bundle-save {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-teal);
+}
+
+.pod-bundle-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.pod-bundle-actions a {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+/* Brand section */
+.brand-section {
+  display: grid;
+  gap: 2.5rem;
+  padding-block: 3rem;
+  padding-inline: 1.5rem;
+  @media (min-width: 45em) {
+    grid-template-columns: 1fr 1fr;
+    padding-inline: 4rem;
+  }
+}
+
+.brand-section h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  margin: 0 0 0.75rem;
+}
+
+.brand-section h2 em {
+  font-style: normal;
+  border-bottom: 2px solid var(--color-purple);
+}
+
+.brand-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.brand-features dt {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.brand-features dd {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.brand-stats-panel {
+  background: var(--color-navy);
+  color: var(--color-light);
+  border-radius: 10px;
+  padding: 2rem;
+}
+
+.brand-stats-panel h3 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.35rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.brand-stats-number {
+  color: var(--color-teal);
+  font-size: 2.5rem;
+  display: block;
+}
+
+.brand-stats-panel > p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.brand-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.brand-stats-grid dt {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.25rem;
+}
+
+.brand-stats-grid dd {
+  margin: 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Subscription section */
+.subscription-section {
+  background: var(--color-navy);
+  color: var(--color-light);
+  display: grid;
+  gap: 2.5rem;
+  padding-block: 3rem;
+  padding-inline: 1.5rem;
+  @media (min-width: 45em) {
+    grid-template-columns: 1fr 1fr;
+    padding-inline: 4rem;
+  }
+}
+
+.subscription-section h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  margin: 0 0 0.75rem;
+}
+
+.subscription-section h2 em {
+  color: var(--color-teal);
+  font-style: italic;
+}
+
+.subscription-section p {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.subscription-panel {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.subscription-frequency {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1.5rem;
+}
+
+.subscription-frequency-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: transparent;
+  color: var(--color-light);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.subscription-frequency-option span {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.subscription-frequency-active {
+  background: var(--color-teal);
+  color: var(--color-navy);
+  border-color: var(--color-teal);
+}
+
+.subscription-frequency-active span {
+  color: var(--color-navy);
+}
+
+.subscription-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.subscription-cta {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.subscription-fineprint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6) !important;
+  text-align: center;
+  margin: 0;
+}
+
+/* Testimonials */
+.testimonials {
+  padding-block: 3rem;
+  padding-inline: 1.5rem;
+  @media (min-width: 45em) {
+    padding-inline: 4rem;
+  }
+}
+
+.testimonials h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  margin: 0 0 0.4rem;
+}
+
+.testimonials-count {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+}
+
+.testimonials-social-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  @media (min-width: 55em) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.testimonial-social-card {
+  margin: 0;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.testimonial-handle {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.testimonial-social-card blockquote,
+.testimonial-review-card blockquote {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.testimonial-by {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.testimonials-review-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  @media (min-width: 55em) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.testimonial-review-card {
+  margin: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.testimonial-stars {
+  color: #f59e0b;
+  margin-bottom: 0.5rem;
+}
+
+/* FAQ */
+.faq-section {
+  background: #eaf7f7;
+  display: grid;
+  gap: 2rem;
+  padding-block: 3rem;
+  padding-inline: 1.5rem;
+  @media (min-width: 45em) {
+    grid-template-columns: 1fr 1.5fr;
+    padding-inline: 4rem;
+  }
+}
+
+.faq-intro h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  margin: 0 0 0.75rem;
+}
+
+.faq-intro p {
+  color: #4b5563;
+  margin-bottom: 1.25rem;
+}
+
+button.hero-cta-secondary {
+  color: var(--color-navy);
+  border-color: var(--color-navy);
+}
+
+.faq-list {
+  margin: 0;
+}
+
+.faq-item {
+  border-bottom: 1px solid #d1d5db;
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 1rem 0;
+  cursor: pointer;
+}
+
+.faq-icon {
+  font-size: 1.25rem;
+  color: var(--color-purple);
+}
+
+.faq-item dd {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Newsletter (homepage variant -- two column with stats grid, distinct
+   from the single-column collection-page newsletter-signup) */
+.home .newsletter-signup {
+  background: var(--color-navy);
+  color: var(--color-light);
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  @media (min-width: 45em) {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.home .newsletter-signup h2 {
+  color: var(--color-light);
+}
+
+.home .newsletter-signup h2 em {
+  color: var(--color-teal);
+  font-style: italic;
+}
+
+.home .newsletter-signup p {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.newsletter-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.newsletter-stats dt {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: var(--color-teal);
+}
+
+.newsletter-stats dd {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
 }

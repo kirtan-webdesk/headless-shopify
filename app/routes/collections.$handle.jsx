@@ -105,8 +105,6 @@ export default function Collection() {
 
   return (
     <div className="collection-page">
-      <RoutineStrip />
-
       <div className="collection-banner">
         <nav aria-label="Breadcrumb" className="collection-breadcrumb">
           <Link to="/">Home</Link>
@@ -203,54 +201,11 @@ export default function Collection() {
   );
 }
 
-/**
- * Static merchandising strip above the grid, matches the reference exactly.
- * Not Storefront-API-driven -- SOW doesn't require this content to be
- * merchant-editable, only the product listing itself.
- */
-function RoutineStrip() {
-  const steps = [
-    {step: 'Step 01', name: 'Car Soap', price: '$24'},
-    {step: 'Step 02', name: 'Exterior Cleaner', price: '$28'},
-    {step: 'Step 03', name: 'Tire & Wheels', price: '$26'},
-    {step: 'Step 04', name: 'Glass Cleaner', price: '$22'},
-    {step: 'Step 05', name: 'Interior Cleaner', price: '$26'},
-  ];
-  return (
-    <section className="routine-strip" aria-labelledby="routine-heading">
-      <p className="section-eyebrow routine-eyebrow">The Routine</p>
-      <h2 id="routine-heading">
-        Five pods. <em>One perfect finish.</em>
-      </h2>
-      <p className="routine-subtext">
-        Single-dose detailing concentrates — drop, fill, shake. No measuring,
-        no waste.
-      </p>
-      <div className="routine-links">
-        <Link to="/collections/all" className="hero-cta hero-cta-primary">
-          Build your kit &rarr;
-        </Link>
-        <Link to="/collections/all?tab=Pods">Shop all pods</Link>
-        <Link to="/collections/all?tab=Refills">Refill subscriptions</Link>
-      </div>
-      <ol className="routine-steps">
-        {steps.map((s) => (
-          <li key={s.step}>
-            <span className="routine-step-label">{s.step}</span>
-            <span className="routine-step-name">{s.name}</span>
-            <span className="routine-step-price">{s.price}</span>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
 function ShopBySurface() {
   const surfaces = [
-    {name: 'Exterior', copy: 'Soap, paint, trim, bodywork'},
-    {name: 'Wheels & Tires', copy: 'Sling-free gloss, ceramic-safe'},
-    {name: 'Interior', copy: 'Glass, dash, vinyl, leather'},
+    {name: 'Exterior', copy: 'Soap, paint, trim, bodywork', image: '/images/exterior.jpg'},
+    {name: 'Wheels & Tires', copy: 'Sling-free gloss, ceramic-safe', image: '/images/wheels-tires.jpg'},
+    {name: 'Interior', copy: 'Glass, dash, vinyl, leather', image: '/images/interior.jpg'},
   ];
   return (
     <section className="shop-by-surface" aria-labelledby="surface-heading">
@@ -258,7 +213,12 @@ function ShopBySurface() {
       <h2 id="surface-heading">Know what you&rsquo;re after?</h2>
       <div className="surface-grid">
         {surfaces.map((s) => (
-          <Link key={s.name} to="/collections/all" className="surface-card">
+          <Link
+            key={s.name}
+            to="/collections/all"
+            className="surface-card"
+            style={{backgroundImage: `url(${s.image})`}}
+          >
             <span className="surface-name">{s.name}</span>
             <span className="surface-copy">{s.copy}</span>
           </Link>
@@ -271,24 +231,28 @@ function ShopBySurface() {
 function AboutCollection() {
   return (
     <section className="about-collection" aria-labelledby="about-heading">
-      <p className="section-eyebrow">About this collection</p>
-      <h2 id="about-heading">
-        One system, <em>twelve ways in.</em>
-      </h2>
-      <p>
-        PEARLS is a five-pod detailing system. Each pod is a single-dose
-        concentrate — pre-measured to the exact ratio the job needs, so
-        there&rsquo;s no guessing at dilution.
-      </p>
-      <p>
-        Buying à la carte works if your car only needs one or two steps. Most
-        people start with a kit: the Full Routine covers everything, the
-        smaller kits cover one part of the job.
-      </p>
-      <p>
-        Everything on this page is formulated and packed in the same
-        Indianapolis facility Car Brite has run for 75 years.
-      </p>
+      <div>
+        <p className="section-eyebrow">About this collection</p>
+        <h2 id="about-heading">
+          One system, <em>twelve ways in.</em>
+        </h2>
+      </div>
+      <div>
+        <p>
+          PEARLS is a five-pod detailing system. Each pod is a single-dose
+          concentrate — pre-measured to the exact ratio the job needs, so
+          there&rsquo;s no guessing at dilution.
+        </p>
+        <p>
+          Buying à la carte works if your car only needs one or two steps.
+          Most people start with a kit: the Full Routine covers everything,
+          the smaller kits cover one part of the job.
+        </p>
+        <p>
+          Everything on this page is formulated and packed in the same
+          Indianapolis facility Car Brite has run for 75 years.
+        </p>
+      </div>
     </section>
   );
 }
@@ -296,32 +260,52 @@ function AboutCollection() {
 function NewsletterSignup() {
   return (
     <section className="newsletter-signup" aria-labelledby="newsletter-heading">
-      <p className="section-eyebrow">The drop list</p>
-      <h2 id="newsletter-heading">
-        Get a free pod with your <em>first order.</em>
-      </h2>
-      <p>
-        One email a month. New scents, garage tours, and the occasional 20%
-        code. No spam.
-      </p>
-      {/* Static form -- newsletter provider not in scope for this sprint;
-          wiring is a separate SOW item (INT-001/002 style manual config). */}
-      <form
-        className="newsletter-form"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <label className="sr-only" htmlFor="newsletter-email">
-          Email address
-        </label>
-        <input
-          id="newsletter-email"
-          type="email"
-          name="email"
-          placeholder="you@yourgarage.com"
-          required
-        />
-        <button type="submit">Sign me up</button>
-      </form>
+      <div>
+        <p className="section-eyebrow">The drop list</p>
+        <h2 id="newsletter-heading">
+          Get a free pod with your <em>first order.</em>
+        </h2>
+        <p>
+          One email a month. New scents, garage tours, and the occasional 20%
+          code. No spam, no sales-bro tone.
+        </p>
+        {/* Static form -- newsletter provider not in scope for this sprint;
+            wiring is a separate SOW item (INT-001/002 style manual config). */}
+        <form
+          className="newsletter-form"
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <label className="sr-only" htmlFor="newsletter-email">
+            Email address
+          </label>
+          <input
+            id="newsletter-email"
+            type="email"
+            name="email"
+            placeholder="you@yourgarage.com"
+            required
+          />
+          <button type="submit">Sign me up</button>
+        </form>
+      </div>
+      <dl className="newsletter-stats">
+        <div>
+          <dt>Free pod</dt>
+          <dd>First order</dd>
+        </div>
+        <div>
+          <dt>4.9★</dt>
+          <dd>Average rating</dd>
+        </div>
+        <div>
+          <dt>1/mo</dt>
+          <dd>Emails, that&rsquo;s it</dd>
+        </div>
+        <div>
+          <dt>0</dt>
+          <dd>Single-use bottles</dd>
+        </div>
+      </dl>
     </section>
   );
 }
