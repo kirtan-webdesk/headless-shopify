@@ -22,6 +22,12 @@ export default async function handleRequest(
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    // Manrope (body copy font) loads from Google Fonts -- default CSP
+    // doesn't allow it, silently blocking the stylesheet + font files with
+    // no visible error. Verified via network requests (zero fonts.googleapis
+    // requests) before concluding this was the cause, not guessed.
+    styleSrc: ["'self'", 'https://fonts.googleapis.com'],
+    fontSrc: ["'self'", 'https://fonts.gstatic.com'],
   });
 
   const body = await renderToReadableStream(

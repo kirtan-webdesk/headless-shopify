@@ -12,7 +12,15 @@
   --color-navy-deep: #0c0f30;
   --color-teal: #73cdda;
   --color-purple: #8e4d9e;
-  --font-display: 'Halogen', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Halogen', 'Archivo Black', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Body-copy font -- verified against the live reference via
+     getComputedStyle(document.body).fontFamily, loaded via Google Fonts
+     link in root.jsx (see links()). */
+  --font-body: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
 }
 
 @font-face {
@@ -266,13 +274,22 @@ button.reset:hover:not(:has(> *)) {
 */
 .header {
   align-items: center;
-  background: #fff;
+  /* Translucent navy over a blur, matches the reference's header treatment
+     (verified: rgba(21,25,73,0.85)) so it blends into the dark hero instead
+     of showing a white seam. */
+  background: rgba(21, 25, 73, 0.85);
+  backdrop-filter: blur(8px);
+  color: var(--color-light);
   display: flex;
   height: var(--header-height);
   padding: 0 1rem;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 10;
+}
+
+.header a {
+  color: inherit;
 }
 
 .header-menu-mobile-toggle {
@@ -474,16 +491,22 @@ button.reset:hover:not(:has(> *)) {
 }
 
 .hero {
-  background: radial-gradient(
-    ellipse at top right,
-    var(--color-purple) 0%,
-    var(--color-navy) 55%,
-    var(--color-navy-deep) 100%
-  );
+  /* 3-layer gradient verified against the live reference via
+     getComputedStyle (purple glow top-right + teal glow bottom-left over a
+     navy base) -- the earlier single radial-gradient was an approximation,
+     not the real value. */
+  background:
+    radial-gradient(120% 80% at 80% 0%, rgba(142, 77, 158, 0.55) 0%, rgba(100, 79, 160, 0) 50%),
+    radial-gradient(80% 60% at 10% 100%, rgba(115, 205, 218, 0.45) 0%, rgba(21, 25, 73, 0) 60%),
+    linear-gradient(var(--color-navy) 0%, var(--color-navy-deep) 60%, var(--color-navy-deep) 100%);
   color: var(--color-light);
+  display: grid;
+  gap: 2rem;
+  align-items: center;
   padding-block: 3rem;
   padding-inline: 1.5rem;
-  @media (min-width: 45em) {
+  @media (min-width: 60em) {
+    grid-template-columns: 1fr 1fr;
     padding-block: 5rem;
     padding-inline: 4rem;
   }
@@ -498,6 +521,24 @@ button.reset:hover:not(:has(> *)) {
   max-width: 40rem;
 }
 
+.hero-photo {
+  aspect-ratio: 4 / 5;
+  border-radius: 28px;
+  overflow: hidden;
+  background-image: linear-gradient(rgba(21, 25, 73, 0) 50%, rgba(21, 25, 73, 0.55) 100%);
+  order: -1;
+  @media (min-width: 60em) {
+    order: 0;
+  }
+}
+
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 28px;
+}
+
 .hero-eyebrow {
   font-family: var(--font-display);
   font-weight: 900;
@@ -509,9 +550,11 @@ button.reset:hover:not(:has(> *)) {
 }
 
 .hero-heading {
-  font-family: var(--font-display);
+  font-family: var(--font-display), 'Archivo Black', system-ui, sans-serif;
   font-weight: 900;
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  /* Reference measured at 96px desktop -- clamp raises the ceiling to match
+     while staying readable down to small screens. */
+  font-size: clamp(2.5rem, 7vw, 6rem);
   line-height: 1.05;
   margin: 0 0 1.5rem;
 }
@@ -522,6 +565,7 @@ button.reset:hover:not(:has(> *)) {
 }
 
 .hero-subtext {
+  font-family: var(--font-body);
   font-size: 1.05rem;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.85);
@@ -537,10 +581,11 @@ button.reset:hover:not(:has(> *)) {
 
 .hero-cta {
   display: inline-block;
-  padding: 0.9rem 1.75rem;
+  /* Reference measured: 11px 18px, pill radius (999px) */
+  padding: 0.7rem 1.15rem;
   font-family: var(--font-display);
   font-weight: 900;
-  border-radius: 4px;
+  border-radius: 999px;
   text-decoration: none;
 }
 

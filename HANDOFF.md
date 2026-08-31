@@ -74,6 +74,19 @@ S2.1 → `done`, S2.2 → `qa` (built and verified, but not self-marked `done` �
 
 **M2 + M3 core build work is now largely complete, pending QA sign-off across S2.1/S2.2/S3.1/S3.2.** Given S3.1's scope expansion (risk R7), actual hours burned should be reconciled against the 45h + 9h feedback buffer soon rather than left for later.
 
+**Then: "the design is not proper, recheck and fix it."** Didn't guess at what was wrong — re-served the reference HTML and pulled exact `getComputedStyle()` values (fonts, gradients, radii) from its live DOM, compared numerically against the build. Found and fixed real, verifiable gaps:
+- Header was scaffold-default white; reference is translucent navy blending into the hero — fixed globally.
+- Hero gradient was an oversimplified 2-stop approximation; replaced with the real 3-layer gradient.
+- Hero had no photo at all; reference is two-column with a 543×680 rounded photo — added it (temporarily a static asset, see below).
+- Body font was never wired up (only headings had Halogen) — added Manrope.
+- Manrope then silently failed to load even with the link added — root cause was Hydrogen's default CSP blocking `fonts.googleapis.com` with no visible console error. Found it by checking network requests (zero Google Fonts requests) before guessing. Fixed in `entry.server.jsx`.
+- Buttons were 4px radius; reference is a full 999px pill.
+- H1 was capped at 72px; reference measures 96px.
+
+**One thing NOT fully fixed:** the hero photo should be a Metaobject field (`hero_image`) for true no-deploy editability, matching S2.2's own acceptance bar. Wrote `scripts/upload-hero-image.mjs` to do that via Admin API — but the token lacks `write_files` scope, so it's blocked. Using a static asset fallback in the meantime, clearly commented as temporary in the code. Logged as `risks[R8]`.
+
+`project.json` at version 17.
+
 **Open items:** Admin API token (4 scopes verified against shopify.dev, given to user, not yet added to `.env`) still needed for the Metaobject definition — S2.2 can't fully complete without it. Dev server hasn't been run against the real store yet (D-HL-ENV-01 check 5, live query) — scaffold currently defaults to mock-shop data since that's how init was run; real store env vars are already in `.env` and should work once `npm run dev` is tried.
 
 **Then: user said ".env details added, proceed straight into S2.2 build." Checked directly instead of trusting the self-report — contradicted on 2 of 3 counts:**

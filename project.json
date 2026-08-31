@@ -28,8 +28,8 @@
       "develop_branch": "develop"
     },
     "created_at": "2026-08-31T11:24:51Z",
-    "updated_at": "2026-08-31T22:00:00Z",
-    "version": 16,
+    "updated_at": "2026-08-31T23:00:00Z",
+    "version": 17,
     "_headless_arm_notes": {
       "note": "project-json.schema.json's project_type enum has no 'new-build' value and platform enum has no 'headless' value, so this project is recorded as platform=shopify / project_type=new-development for schema compliance. The actual engagement, per headless/SKILL.md and sow-spec.md, is: headless_engagement_type=new-build (D-HL-TYPES-01 type 1), architecture=A (Hydrogen+Oxygen, D-HL-STACK-01).",
       "headless_engagement_type": "new-build",
@@ -595,6 +595,14 @@
       "impact": "medium",
       "mitigation": "Logged, not silently absorbed. Track actual_hours against this sprint; if it materially exceeds the 9h feedback buffer combined with other overruns, resurface for a scope/budget conversation rather than continuing to quietly absorb expansions.",
       "status": "open"
+    },
+    {
+      "id": "R8",
+      "description": "Admin API token lacks write_files scope -- cannot upload images (e.g. hero photo) into Shopify Files programmatically. hero_image Metaobject field exists but is unset; homepage currently falls back to a static /images/hero-car.jpg asset instead of true no-deploy editability for that one field.",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "scripts/upload-hero-image.mjs is written and ready -- just needs the token's scopes updated (add write_files) in the custom app config, then re-run it and swap _index.jsx back to homepage.hero_image. Text/CTA content on the homepage IS already fully Metaobject-editable; only the photo itself is the gap.",
+      "status": "open"
     }
   ],
   "bugs": [],
@@ -1081,6 +1089,29 @@
         "verification": "Built clean, dev server tested against a real wds55 product (the-collection-snowboard-liquid): image, category, title, price, \"In stock\" status, Add to cart, and a working deferred Related Products section (correctly showing a different snowboard, excluding itself) all confirmed in a real browser, desktop + mobile 375px. No new console errors beyond the pre-existing unrelated consent.checkoutDomain warning.",
         "project_version_before": 15,
         "project_version_after": 16
+      }
+    },
+    {
+      "timestamp": "2026-08-31T23:00:00Z",
+      "actor": "user",
+      "actor_type": "human",
+      "action": "design_fidelity_recheck_requested",
+      "details": {
+        "request": "As per given reference mockup the design is not proper so can you recheck and fix it.",
+        "method": "Did not guess -- re-served the reference HTML and used javascript_tool to pull exact getComputedStyle() values (fonts, colors, gradients, border-radius, image treatment) from the live reference DOM, then compared numerically against the build rather than eyeballing screenshots.",
+        "issues_found_and_fixed": [
+          "Header background was the scaffold default white (#fff) -- reference uses translucent navy (rgba(21,25,73,0.85)) with backdrop-blur so it blends into the dark hero instead of showing a white seam. Fixed globally in app.css .header (affects every page).",
+          "Hero background was an oversimplified 2-stop radial-gradient -- reference is a 3-layer gradient (purple glow top-right + teal glow bottom-left over a navy base). Replaced with the exact verified gradient.",
+          "Hero was text-only, no photo -- reference is a two-column layout with a 543x680-ish photo, 28px rounded corners, gradient scrim. Added app/routes/_index.jsx hero-photo column + CSS.",
+          "Body copy font was never set -- reference uses Manrope; only Halogen (headings) had been wired up. Added Google Fonts link in root.jsx links().",
+          "Manrope silently failed to load even after adding the link -- ROOT CAUSE: Hydrogen's default Content-Security-Policy (entry.server.jsx, createContentSecurityPolicy) does not allow fonts.googleapis.com/fonts.gstatic.com by default, so the browser blocked it with no visible console error (checked network requests, found zero google fonts requests, then found the CSP mechanism). Fixed by adding styleSrc/fontSrc overrides in entry.server.jsx. Re-verified via document.fonts -- Manrope now genuinely shows status \"loaded\".",
+          "CTA buttons had border-radius 4px -- reference measured 999px (full pill). Fixed globally (.hero-cta and inherited by collection page CTAs).",
+          "H1 was capped at a max of 72px (4.5rem) -- reference measured 96px desktop. Raised the clamp ceiling to 6rem (96px)."
+        ],
+        "not_fixed_yet": "hero_image Metaobject field left unset -- Admin API token lacks write_files scope, upload script written and ready (scripts/upload-hero-image.mjs) but blocked on a scope grant, tracked as risks[R8]. Static asset fallback used in the meantime, clearly commented in code as temporary.",
+        "verification": "Rebuilt clean (exit 0) after each fix, re-served both the reference and the build side by side, pulled getComputedStyle() from both and compared numerically (not just visual screenshots) for font-family, font-size, background gradients, border-radius, and confirmed via document.fonts that Manrope actually loads post-fix.",
+        "project_version_before": 16,
+        "project_version_after": 17
       }
     }
   ],

@@ -54,6 +54,19 @@ export function links() {
       rel: 'preconnect',
       href: 'https://shop.app',
     },
+    // Manrope is the reference's body-copy font (Halogen is display-only,
+    // set up as @font-face in app.css already). Verified against the live
+    // reference via getComputedStyle, not assumed.
+    {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
+    {
+      rel: 'preconnect',
+      href: 'https://fonts.gstatic.com',
+      crossOrigin: 'anonymous',
+    },
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap',
+    },
     {rel: 'icon', type: 'image/svg+xml', href: favicon},
   ];
 }

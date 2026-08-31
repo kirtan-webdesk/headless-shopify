@@ -163,6 +163,21 @@ function Hero({homepage}) {
           )}
         </div>
       </div>
+      {/* TEMPORARY: hero_image is a Metaobject field (file_reference) per
+          the S2.2 "no deploy" acceptance criteria, but the Admin API token
+          lacks write_files scope so it couldn't be uploaded into Shopify
+          Files this session (see project.json risks). Falls back to the
+          static reference asset for now -- swap to homepage.hero_image
+          once the scope is granted and scripts/upload-hero-image.mjs runs. */}
+      <div className="hero-photo">
+        <img
+          src="/images/hero-car.jpg"
+          alt="A hand washing an orange car with PEARLS foaming soap"
+          width="800"
+          height="1000"
+          loading="eager"
+        />
+      </div>
     </section>
   );
 }
