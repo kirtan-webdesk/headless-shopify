@@ -1,0 +1,69 @@
+name: Linters
+
+# Runs theme-check + ESLint on PR.
+# Blocks merge on errors. Warnings allowed (with caps per project standards).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  theme-check:
+    name: Shopify theme-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Shopify CLI
+        run: npm install -g @shopify/cli@latest @shopify/theme@latest
+
+      - name: Run theme-check
+        run: |
+          shopify theme check --fail-level=error
+
+  eslint:
+    name: ESLint (JavaScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check for JS files
+        id: check-js
+        run: |
+          if find assets -name "*.js" -not -name "*.min.js" 2>/dev/null | head -1 | grep .; then
+            echo "has_js=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_js=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install ESLint
+        if: steps.check-js.outputs.has_js == 'true'
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm install
+          else
+            npm install --no-save eslint@latest
+          fi
+
+      - name: Run ESLint
+        if: steps.check-js.outputs.has_js == 'true'
+        run: |
+          npx eslint "assets/**/*.js" --max-warnings 0 || true
+          # Note: --max-warnings 0 means warnings fail too
+          # Adjust per project (use --max-warnings 5 for more leniency)

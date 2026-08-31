@@ -1,0 +1,65 @@
+{
+  "_comment": "ESLint baseline for Shopify themes. Per shopify/knowledge/01-coding-standards.md + 11-web-components.md",
+
+  "env": {
+    "browser": true,
+    "es2022": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+
+  "extends": ["eslint:recommended"],
+
+  "globals": {
+    "Shopify": "readonly",
+    "publish": "readonly",
+    "subscribe": "readonly",
+    "PUB_SUB_EVENTS": "readonly",
+    "customElements": "readonly",
+    "ShopifyAnalytics": "readonly",
+    "theme": "readonly"
+  },
+
+  "rules": {
+    "_comment_security": "Security rules per shopify/knowledge/09-forbidden.md (JS-003)",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-script-url": "error",
+
+    "_comment_quality": "Code quality rules",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-debugger": "error",
+    "no-alert": "warn",
+
+    "_comment_style": "Style consistency",
+    "semi": ["error", "always"],
+    "quotes": ["warn", "single", { "avoidEscape": true }],
+    "indent": ["warn", 2, { "SwitchCase": 1 }],
+
+    "_comment_async": "Async safety",
+    "no-async-promise-executor": "error",
+    "require-await": "warn",
+
+    "_comment_modernization": "Prefer modern patterns",
+    "prefer-const": "warn",
+    "no-var": "warn",
+    "prefer-arrow-callback": "warn"
+  },
+
+  "overrides": [
+    {
+      "files": ["*.test.js", "tests/**/*.js"],
+      "env": {
+        "node": true,
+        "jest": true
+      },
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
+}

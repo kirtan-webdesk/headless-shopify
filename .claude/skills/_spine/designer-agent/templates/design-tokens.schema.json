@@ -1,0 +1,236 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://webdesksolution.ca/schemas/design-tokens.json",
+  "title": "Design Tokens Schema",
+  "description": "Schema for design-tokens.json. Validates structure, completeness, and references. Does NOT validate WCAG contrast (separate validator).",
+  "type": "object",
+  "required": ["schema_version", "colors", "typography", "spacing", "breakpoints", "border", "shadow", "animation", "z-index", "_validation"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Project ID from project.json"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generated_by": {
+      "type": "string",
+      "description": "Agent + version, e.g., 'designer-agent v1.0.0'"
+    },
+    "colors": {
+      "type": "object",
+      "required": ["brand", "neutral", "text", "surface", "button", "border", "status"],
+      "properties": {
+        "brand": {
+          "type": "object",
+          "required": ["primary", "primary-hover", "primary-active", "secondary", "accent"],
+          "properties": {
+            "primary": { "$ref": "#/definitions/color" },
+            "primary-hover": { "$ref": "#/definitions/color" },
+            "primary-active": { "$ref": "#/definitions/color" },
+            "secondary": { "$ref": "#/definitions/color" },
+            "secondary-hover": { "$ref": "#/definitions/color" },
+            "accent": { "$ref": "#/definitions/color" }
+          }
+        },
+        "neutral": {
+          "type": "object",
+          "required": ["0", "50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"],
+          "additionalProperties": { "$ref": "#/definitions/color" }
+        },
+        "text": {
+          "type": "object",
+          "required": ["primary", "secondary", "muted", "inverse", "link", "link-hover"],
+          "additionalProperties": { "$ref": "#/definitions/colorOrReference" }
+        },
+        "surface": {
+          "type": "object",
+          "required": ["page", "card", "card-hover", "muted", "overlay"],
+          "additionalProperties": { "$ref": "#/definitions/colorOrReference" }
+        },
+        "button": {
+          "type": "object",
+          "required": ["primary-bg", "primary-text", "primary-bg-hover", "secondary-bg", "secondary-text", "secondary-border", "ghost-bg", "ghost-text", "ghost-bg-hover"],
+          "additionalProperties": { "$ref": "#/definitions/colorOrReference" }
+        },
+        "border": {
+          "type": "object",
+          "required": ["default", "muted", "strong", "focus"],
+          "additionalProperties": { "$ref": "#/definitions/colorOrReference" }
+        },
+        "status": {
+          "type": "object",
+          "required": ["success", "success-bg", "warning", "warning-bg", "error", "error-bg", "info", "info-bg"],
+          "additionalProperties": { "$ref": "#/definitions/colorOrReference" }
+        }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "required": ["font-family", "font-size", "font-weight", "line-height", "letter-spacing", "preset"],
+      "properties": {
+        "font-family": {
+          "type": "object",
+          "required": ["heading", "body"],
+          "properties": {
+            "heading": { "type": "string" },
+            "body": { "type": "string" },
+            "mono": { "type": "string" }
+          }
+        },
+        "font-size": {
+          "type": "object",
+          "required": ["xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl"],
+          "additionalProperties": { "type": "string" }
+        },
+        "font-weight": {
+          "type": "object",
+          "required": ["regular", "medium", "semibold", "bold"],
+          "additionalProperties": { "type": "string", "pattern": "^[1-9]00$" }
+        },
+        "line-height": {
+          "type": "object",
+          "required": ["tight", "normal", "relaxed"],
+          "additionalProperties": { "type": "string" }
+        },
+        "letter-spacing": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "preset": {
+          "type": "object",
+          "required": ["h1", "h2", "h3", "h4", "body", "small", "button"],
+          "additionalProperties": {
+            "type": "object",
+            "required": ["font-family", "font-size", "font-weight", "line-height"],
+            "properties": {
+              "font-family": { "$ref": "#/definitions/stringOrReference" },
+              "font-size": { "$ref": "#/definitions/stringOrReference" },
+              "font-weight": { "$ref": "#/definitions/stringOrReference" },
+              "line-height": { "$ref": "#/definitions/stringOrReference" },
+              "letter-spacing": { "$ref": "#/definitions/stringOrReference" }
+            }
+          }
+        }
+      }
+    },
+    "spacing": {
+      "type": "object",
+      "required": ["0", "1", "2", "3", "4", "6", "8", "12", "16", "20", "24"],
+      "additionalProperties": { "type": "string" }
+    },
+    "section-padding": {
+      "type": "object",
+      "required": ["mobile", "tablet", "desktop"],
+      "additionalProperties": { "$ref": "#/definitions/stringOrReference" }
+    },
+    "container": {
+      "type": "object",
+      "required": ["max-width", "padding-mobile", "padding-tablet", "padding-desktop"],
+      "additionalProperties": { "$ref": "#/definitions/stringOrReference" }
+    },
+    "grid": {
+      "type": "object",
+      "required": ["gap-mobile", "gap-tablet", "gap-desktop"],
+      "additionalProperties": { "$ref": "#/definitions/stringOrReference" }
+    },
+    "breakpoints": {
+      "type": "object",
+      "required": ["mobile", "tablet", "desktop", "wide"],
+      "additionalProperties": { "type": "string", "pattern": "^[0-9]+px$" }
+    },
+    "border": {
+      "type": "object",
+      "required": ["width", "radius"],
+      "properties": {
+        "width": {
+          "type": "object",
+          "required": ["0", "1", "2"],
+          "additionalProperties": { "type": "string" }
+        },
+        "radius": {
+          "type": "object",
+          "required": ["none", "sm", "md", "lg", "full"],
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "shadow": {
+      "type": "object",
+      "required": ["sm", "md", "lg", "focus-visible"],
+      "additionalProperties": { "type": "string" }
+    },
+    "animation": {
+      "type": "object",
+      "required": ["duration", "easing"],
+      "properties": {
+        "duration": {
+          "type": "object",
+          "required": ["fast", "normal", "slow"],
+          "additionalProperties": { "type": "string", "pattern": "^[0-9]+ms$" }
+        },
+        "easing": {
+          "type": "object",
+          "required": ["ease-out", "ease-in-out"],
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "z-index": {
+      "type": "object",
+      "required": ["dropdown", "sticky", "modal", "toast"],
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "integer" }
+        ]
+      }
+    },
+    "_validation": {
+      "type": "object",
+      "required": ["wcag_level", "validation_date", "status", "pairs_validated", "pairs_passed"],
+      "properties": {
+        "wcag_level": { "type": "string", "enum": ["AA", "AAA"] },
+        "validation_date": { "type": "string", "format": "date-time" },
+        "validator_version": { "type": "string" },
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "pairs_validated": { "type": "integer", "minimum": 0 },
+        "pairs_passed": { "type": "integer", "minimum": 0 },
+        "lowest_ratio": {
+          "type": "object",
+          "properties": {
+            "pair": { "type": "string" },
+            "ratio": { "type": "number" },
+            "threshold": { "type": "number" }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "color": {
+      "oneOf": [
+        { "type": "string", "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$" },
+        { "type": "string", "pattern": "^rgba?\\(" },
+        { "type": "string", "pattern": "^hsla?\\(" }
+      ]
+    },
+    "colorOrReference": {
+      "oneOf": [
+        { "$ref": "#/definitions/color" },
+        { "type": "string", "pattern": "^\\{[a-z._-]+\\}$" }
+      ]
+    },
+    "stringOrReference": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "string", "pattern": "^\\{[a-z._-]+\\}$" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,61 @@
+# Pre-commit hooks configuration
+# Per _spine/shared-knowledge/dev-environment-setup.md
+#
+# Install:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Hooks run on `git commit` and can block bad commits before they happen.
+
+repos:
+  # General purpose checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+
+  # Custom: detect Shopify / Anthropic API tokens
+  - repo: local
+    hooks:
+      - id: detect-secrets
+        name: Detect API tokens
+        entry: bash -c 'if grep -rE "(shpat_[a-zA-Z0-9]+|shppa_[a-zA-Z0-9]+|sk-ant-[a-zA-Z0-9-]+)" --include="*.{liquid,js,json,md,yml,yaml,html,css,php}" .; then echo "ERROR: API tokens detected. Remove before committing."; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+  # Liquid linting (only if theme-check is installed)
+  - repo: local
+    hooks:
+      - id: theme-check
+        name: Shopify theme-check
+        entry: bash -c 'if command -v shopify >/dev/null 2>&1; then shopify theme check --fail-level=error || exit 1; else echo "shopify CLI not installed - skipping"; fi'
+        language: system
+        pass_filenames: false
+        types: [text]
+
+  # ESLint for JS files
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.0.0
+    hooks:
+      - id: eslint
+        files: \.(js)$
+        types: [file]
+        additional_dependencies:
+          - eslint@latest
+
+  # Conventional commits (per shared-knowledge/git-branch-strategy.md)
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: []

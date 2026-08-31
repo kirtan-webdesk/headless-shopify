@@ -1,0 +1,12 @@
+{
+  "arm": "headless",
+  "arm_version": "0.18.0",
+  "spine_pinned": "v1.11.35",
+  "shipped_by": "headless skill-dev window (autonomous, D-ARM-AUTONOMY-01)",
+  "shipped_date": "2026-08-27",
+  "integrity_gate": "PASS — 0 contamination (run manually; arm-ship-bundle.sh blocked by swapped-argument bug, see HANDOFF)",
+  "reserved_scope": "VERIFIED UNCHANGED by byte-diff against pristine v1.11.35 — not attested, checked",
+  "frontmatter_validator": "28 files, 0 errors, 0 warnings",
+  "arm_file_count": 29,
+  "notes": "First autonomous arm ship. Closes HL-CAP-002 (publication scoping) as verified-facts §17. Adds skills/headless/README.md for the human doing the build."
+}

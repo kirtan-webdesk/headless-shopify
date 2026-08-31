@@ -1,0 +1,62 @@
+name: Shopify Theme Push (Staging)
+
+# When a feature/* or fix/* branch merges to develop, push to staging theme.
+# Staging theme is used for milestone QA + client review per A5/A7.
+
+on:
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: staging-push
+  cancel-in-progress: false  # Don't cancel — staging pushes should run sequentially
+
+jobs:
+  push-to-staging:
+    name: Push to staging theme
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Shopify CLI
+        run: |
+          npm install -g @shopify/cli@latest @shopify/theme@latest
+
+      - name: Push to staging theme
+        env:
+          SHOPIFY_CLI_THEME_TOKEN: ${{ secrets.SHOPIFY_CLI_THEME_TOKEN }}
+          SHOPIFY_STORE_URL: ${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_STAGING_THEME_ID: ${{ secrets.SHOPIFY_STAGING_THEME_ID }}
+        run: |
+          shopify theme push \
+            --store "$SHOPIFY_STORE_URL" \
+            --theme "$SHOPIFY_STAGING_THEME_ID" \
+            --path . \
+            --nodelete
+
+      - name: Generate staging preview URL
+        id: preview-url
+        run: |
+          PREVIEW_URL="https://${{ secrets.SHOPIFY_STORE_URL }}/?preview_theme_id=${{ secrets.SHOPIFY_STAGING_THEME_ID }}"
+          echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+
+      - name: Comment on develop commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = '${{ steps.preview-url.outputs.url }}';
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `🚀 Staging theme updated. Preview: ${previewUrl}\n\nReady for milestone QA + client review.`
+            });

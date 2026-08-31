@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://webdesksolution.ca/schemas/section-map.json",
+  "title": "Section Map Schema",
+  "description": "Schema for section-map.json. Defines page composition, section ordering, sprint assignment, and pattern lineage.",
+  "type": "object",
+  "required": ["schema_version", "project_id", "generated_at", "pages"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "design_path": {
+      "type": "string",
+      "enum": [
+        "custom-over-default-theme",
+        "inspired-by-predefined-template",
+        "fully-custom",
+        "headless",
+        "figma-import",
+        "page-builder-driven"
+      ]
+    },
+    "section_prefix": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Per-project section prefix, e.g., 'aurora' for Aurora Skincare. All section file names use this prefix."
+    },
+    "pages": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/page" }
+    },
+    "global_sections": {
+      "type": "array",
+      "description": "Sections that appear on every page (typically header, footer, announcement bar)",
+      "items": { "$ref": "#/definitions/section" }
+    }
+  },
+  "definitions": {
+    "page": {
+      "type": "object",
+      "required": ["name", "template", "sections"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable page name"
+        },
+        "template": {
+          "type": "string",
+          "description": "Platform-specific template name (e.g., 'index', 'product', 'collection' for Shopify)"
+        },
+        "url_pattern": {
+          "type": "string",
+          "description": "URL pattern for this page (e.g., '/products/[handle]')"
+        },
+        "spec_deliverables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Deliverable IDs from spec.md this page satisfies (e.g., ['D1', 'D2'])"
+        },
+        "primary_goal": {
+          "type": "string",
+          "description": "Primary user action on this page (per CRO Q17)"
+        },
+        "sections": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/section" }
+        },
+        "responsive_notes": {
+          "type": "object",
+          "properties": {
+            "mobile": { "type": "string" },
+            "tablet": { "type": "string" },
+            "desktop": { "type": "string" }
+          }
+        },
+        "seo": {
+          "type": "object",
+          "properties": {
+            "schema_types": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Schema.org types this page should output (e.g., ['Product', 'BreadcrumbList'])"
+            },
+            "meta_priority": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          }
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": ["id", "type", "name", "order", "pattern_source", "sprint_assignment"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique section ID within page (e.g., 'homepage-hero', 'pdp-gallery')"
+        },
+        "type": {
+          "type": "string",
+          "description": "Section category (e.g., 'hero', 'product-grid', 'footer')"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable section name"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Order on the page (0-indexed)"
+        },
+        "pattern_source": {
+          "type": "string",
+          "description": "Path to source pattern in library (e.g., '<active-platform>/examples/sections/hero/hero-fullbleed-image')"
+        },
+        "pattern_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "customizations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of customizations from base pattern"
+        },
+        "figma_frame": {
+          "type": "string",
+          "description": "Figma frame URL if Figma is used"
+        },
+        "mockup_path": {
+          "type": "string",
+          "description": "Path to visual mockup PNG/JPG"
+        },
+        "sprint_assignment": {
+          "type": "string",
+          "pattern": "^S[0-9]+\\.[0-9]+$",
+          "description": "Sprint ID this section will be built in"
+        },
+        "settings": {
+          "type": "array",
+          "description": "Section schema settings (merchant-editable in theme editor)",
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "label"],
+            "properties": {
+              "id": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["text", "textarea", "richtext", "url", "image_picker", "video", "select", "checkbox", "radio", "range", "color", "color_scheme", "font_picker", "html", "header", "paragraph"]
+              },
+              "label": { "type": "string" },
+              "default": {},
+              "info": { "type": "string" }
+            }
+          }
+        },
+        "blocks": {
+          "type": "array",
+          "description": "Repeatable blocks within section (e.g., slides in a carousel, cards in a grid)",
+          "items": {
+            "type": "object",
+            "required": ["type", "name"],
+            "properties": {
+              "type": { "type": "string" },
+              "name": { "type": "string" },
+              "settings": { "type": "array" }
+            }
+          }
+        },
+        "performance_budget": {
+          "type": "object",
+          "properties": {
+            "max_image_kb": { "type": "integer" },
+            "max_js_kb": { "type": "integer" },
+            "max_css_kb": { "type": "integer" }
+          }
+        },
+        "accessibility_notes": {
+          "type": "string",
+          "description": "Section-specific accessibility considerations (e.g., 'Hero text overlay requires 4.5:1 contrast against gradient')"
+        }
+      }
+    }
+  }
+}

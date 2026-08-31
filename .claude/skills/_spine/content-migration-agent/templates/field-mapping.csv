@@ -1,0 +1,90 @@
+data_type,source_field,target_field,transformation,default_value,required,notes
+# Products
+product,sku,sku,direct,,YES,Used as unique identifier
+product,name,title,direct,,YES,
+product,url_key,handle,slugify_lowercase_hyphenated,,YES,Convert to URL-safe slug
+product,description,body_html,html_pass_through,,YES,Sanitize via HTMLPurifier (strip scripts and dangerous tags)
+product,short_description,(metafield: short_description),html_pass_through,,NO,Store as metafield if exists
+product,price,variants[0].price,direct,,YES,
+product,special_price,variants[0].compare_at_price,direct,,NO,Only if non-null
+product,cost,variants[0].cost,direct,,NO,Internal cost (not customer-facing)
+product,weight,variants[0].weight,direct_with_unit_conversion_kg,0,NO,
+product,length,(metafield: dimensions.length),direct,,NO,
+product,width,(metafield: dimensions.width),direct,,NO,
+product,height,(metafield: dimensions.height),direct,,NO,
+product,manage_stock,variants[0].inventory_management,boolean_to_shopify_string,shopify,NO,
+product,qty,variants[0].inventory_quantity,direct,0,NO,
+product,is_in_stock,variants[0].inventory_quantity,boolean_to_zero_or_one,0,NO,If managing stock
+product,images,images,custom_image_pipeline,,YES,
+product,gallery_images,images[1..N],custom_image_pipeline,,NO,Append after primary
+product,attribute_set_id,product_type,attribute_set_lookup,,NO,Map to Shopify product type
+product,categories,collections,custom_collection_mapping,,NO,Many-to-many
+product,visibility,published,visibility_to_published,true,YES,visibility=4 -> true; else -> false
+product,status,status,status_mapping,active,YES,enabled->active; disabled->draft
+product,meta_title,seo_title,direct,(fallback: product.title),NO,
+product,meta_description,seo_description,direct,(fallback: short_description_truncated_160),NO,
+product,meta_keywords,(SKIP),,,,Shopify deprecates meta_keywords
+product,tax_class_id,(SKIP),,,,Tax handled at store level not per product
+product,created_at,(metafield: legacy_created_at),direct,,NO,Preserve for reference
+product,updated_at,(SKIP),,,,Target generates new updated_at on import
+product,vendor,vendor,direct,,NO,
+product,brand,vendor,direct,,NO,If brand is the vendor concept
+# Customers
+customer,email,email,email_normalize,,YES,Unique identifier
+customer,first_name,first_name,direct,,NO,
+customer,last_name,last_name,direct,,NO,
+customer,phone,phone,phone_normalize_e164,,NO,
+customer,is_subscribed,accepts_marketing,direct,false,YES,Must respect existing consent (GDPR)
+customer,password_hash,(SPECIAL: password_reset_required),special_password_strategy,,NO,Cannot migrate hash; force reset
+customer,addresses,addresses,address_array_migration,,NO,Per-address normalization
+customer,default_address_id,default_address,address_lookup,,NO,
+customer,group_id,tags,customer_group_to_tag_mapping,,NO,Use mapping table
+customer,note,note,direct,,NO,
+customer,lifetime_value,(metafield: lifetime_value_usd),direct,,NO,
+customer,total_orders_count,(metafield: total_orders),direct,0,NO,
+customer,created_at,(metafield: legacy_created_at),direct,,NO,
+customer,last_login_at,(metafield: legacy_last_login),direct,,NO,
+# Orders
+order,order_number,(metafield: legacy_order_number),direct,,YES,Preserve for customer reference
+order,customer_email,customer_email,email_normalize,,YES,Used to link to migrated customer
+order,total_price,total_price,direct,,YES,
+order,subtotal_price,subtotal_price,direct,,NO,
+order,total_tax,total_tax,direct,,NO,
+order,total_shipping,total_shipping,direct,,NO,
+order,currency,currency,uppercase_iso_4217,USD,YES,
+order,created_at,processed_at,date_format_iso8601,,YES,
+order,status,financial_status,order_status_mapping,paid,YES,
+order,fulfillment_status,fulfillment_status,fulfillment_status_mapping,fulfilled,YES,
+order,line_items,line_items,line_items_pipeline,,YES,Preserve SKU + qty + price
+order,shipping_address,shipping_address,address_normalize,,NO,
+order,billing_address,billing_address,address_normalize,,NO,
+order,note,note,direct,,NO,
+order,discount_codes,discount_codes,direct,,NO,
+order,referral_url,(metafield: referral_url),direct,,NO,
+# Categories / Collections
+category,name,title,direct,,YES,
+category,url_key,handle,slugify_lowercase_hyphenated,,YES,
+category,description,body_html,html_pass_through,,NO,
+category,image,image,custom_image_pipeline,,NO,
+category,parent_id,parent_collection_id,category_hierarchy_lookup,,NO,For nested collections
+category,is_active,published,direct,true,YES,
+category,sort_order,sort_order,direct,0,NO,
+# Blog posts
+blog_post,title,title,direct,,YES,
+blog_post,url_key,handle,slugify_lowercase_hyphenated,,YES,
+blog_post,content,body_html,html_pass_through_with_link_rewriting,,YES,Rewrite internal links to target URLs
+blog_post,author,author,direct,Anonymous,NO,Or attribution string
+blog_post,published_at,published_at,date_format_iso8601,,YES,
+blog_post,is_active,published,direct,true,YES,
+blog_post,featured_image,image,custom_image_pipeline,,NO,
+blog_post,tags,tags,direct,,NO,
+# Reviews
+review,product_sku,product_reference,sku_to_product_lookup,,YES,Match to migrated product
+review,customer_email,customer_email,email_normalize,(anonymous),NO,
+review,author_name,author,direct,Anonymous,YES,Fallback if customer not identified
+review,rating,rating,rating_scale_normalize,5,YES,Normalize to 1-5 scale if source uses different scale
+review,title,title,direct,,NO,
+review,body,body,html_strip,,YES,Strip HTML for plain text reviews
+review,is_verified_purchase,verified_purchase,direct,false,NO,
+review,created_at,created_at,date_format_iso8601,,YES,
+review,is_published,is_approved,direct,true,YES,Default to approved

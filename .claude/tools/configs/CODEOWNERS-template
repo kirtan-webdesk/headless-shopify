@@ -1,0 +1,79 @@
+# CODEOWNERS — [Project Name]
+#
+# Per _spine/code-review-agent/knowledge/03-sensitive-paths.md
+# Required reviewers per file path. Branch protection enforces this.
+#
+# Format: <pattern> @user1 @user2 @team
+
+# ============================================================
+# Default — any senior dev can approve
+# ============================================================
+* @your-senior-dev-1 @your-senior-dev-2
+
+# ============================================================
+# Sensitive paths — require specific senior approval
+# ============================================================
+
+# Checkout customization (Shopify Plus only)
+/checkout.liquid                                @your-senior-dev-2 @your-tech-lead
+
+# Cart sections + snippets
+/sections/**cart**                              @your-senior-dev-2 @your-tech-lead
+/snippets/**cart**                              @your-senior-dev-2 @your-tech-lead
+/assets/**cart**.js                             @your-senior-dev-2 @your-tech-lead
+
+# Payment-related files
+/snippets/**payment**                           @your-senior-dev-2 @your-tech-lead
+**/*payment*                                    @your-senior-dev-2 @your-tech-lead
+
+# Price calculations
+/snippets/**price**                             @your-senior-dev-2 @your-tech-lead
+
+# Customer accounts
+/templates/customers/                           @your-senior-dev-2 @your-tech-lead
+
+# Section schemas (impact across project)
+/sections/*.liquid                              @your-tech-lead
+
+# Theme settings
+/config/settings_schema.json                    @your-tech-lead
+
+# ============================================================
+# Security-sensitive
+# ============================================================
+**/*auth*                                       @your-senior-dev-2 @your-tech-lead
+**/*login*                                      @your-senior-dev-2 @your-tech-lead
+
+# ============================================================
+# Configuration
+# ============================================================
+/.env*                                          @your-tech-lead
+/.github/                                       @your-tech-lead
+/CODEOWNERS                                     @your-tech-lead
+/.theme-check.yml                               @your-tech-lead
+
+# ============================================================
+# Documentation (less strict)
+# ============================================================
+*.md                                            @your-senior-dev-1 @your-senior-dev-2
+/AGENCY-MASTER-DOC.md                           @your-tech-lead
+
+# ============================================================
+# Instructions for setting this up
+# ============================================================
+#
+# 1. Replace placeholder usernames with actual GitHub usernames or teams:
+#    @your-senior-dev-1 → @actual-username
+#    @your-senior-dev-2 → @actual-username
+#    @your-tech-lead → @actual-username
+#
+# 2. Copy this file to .github/CODEOWNERS in the project repo
+#    (lowercase folder, ALL CAPS filename, no extension)
+#
+# 3. Enable branch protection for main + develop with required reviewers:
+#    Repo Settings → Branches → Add rule
+#      - Require approvals from Code Owners: ON
+#      - Require approvals: 1 (or 2 for main)
+#
+# 4. Code Review Agent reads this file to identify sensitive paths
+#    automatically and surfaces them in PR comments.

@@ -1,0 +1,154 @@
+name: axe-core Accessibility CI
+
+# Runs axe-core via Playwright on affected pages. Blocks PR merge if any violations found.
+# Per shopify/knowledge/03-accessibility.md and _spine/qa-agent/knowledge/01-qa-modules.md (Module 5)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  axe:
+    name: axe-core a11y scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Wait for theme push
+        run: sleep 90
+
+      - name: Install dependencies
+        run: |
+          npm install --no-save \
+            @playwright/test \
+            @axe-core/playwright
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run axe-core scan
+        env:
+          SHOPIFY_STORE_URL: ${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_DEV_THEME_ID: ${{ secrets.SHOPIFY_DEV_THEME_ID }}
+        run: |
+          cat << 'EOF' > axe-scan.js
+          const { chromium } = require('@playwright/test');
+          const AxeBuilder = require('@axe-core/playwright').default;
+
+          const STORE_URL = process.env.SHOPIFY_STORE_URL;
+          const THEME_ID = process.env.SHOPIFY_DEV_THEME_ID;
+
+          const pagesToScan = [
+            { name: 'Homepage', url: `https://${STORE_URL}/?preview_theme_id=${THEME_ID}` },
+            { name: 'PDP', url: `https://${STORE_URL}/products/example-product?preview_theme_id=${THEME_ID}` },
+            { name: 'PLP', url: `https://${STORE_URL}/collections/all?preview_theme_id=${THEME_ID}` },
+            { name: 'Cart', url: `https://${STORE_URL}/cart?preview_theme_id=${THEME_ID}` },
+          ];
+
+          (async () => {
+            const browser = await chromium.launch();
+            const results = [];
+            let totalViolations = 0;
+
+            for (const page of pagesToScan) {
+              const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+              const tab = await context.newPage();
+
+              try {
+                await tab.goto(page.url, { waitUntil: 'networkidle', timeout: 30000 });
+
+                const accessibilityScan = await new AxeBuilder({ page: tab })
+                  .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+                  .analyze();
+
+                const violationCount = accessibilityScan.violations.length;
+                totalViolations += violationCount;
+
+                results.push({
+                  name: page.name,
+                  url: page.url,
+                  violations: accessibilityScan.violations.map(v => ({
+                    id: v.id,
+                    impact: v.impact,
+                    description: v.description,
+                    helpUrl: v.helpUrl,
+                    nodes: v.nodes.length,
+                  })),
+                });
+              } catch (error) {
+                results.push({
+                  name: page.name,
+                  url: page.url,
+                  error: error.message,
+                });
+              }
+
+              await context.close();
+            }
+
+            await browser.close();
+
+            console.log(JSON.stringify(results, null, 2));
+            require('fs').writeFileSync('axe-results.json', JSON.stringify({
+              totalViolations,
+              results,
+            }, null, 2));
+
+            // Fail if any violations
+            if (totalViolations > 0) {
+              process.exit(1);
+            }
+          })();
+          EOF
+
+          node axe-scan.js
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axe-results
+          path: axe-results.json
+          retention-days: 30
+
+      - name: Post axe results to PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('axe-results.json')) return;
+
+            const data = JSON.parse(fs.readFileSync('axe-results.json', 'utf8'));
+
+            let body = `### axe-core Accessibility Scan\n\n`;
+            body += `Total violations: ${data.totalViolations}\n\n`;
+
+            for (const page of data.results) {
+              body += `**${page.name}** (${page.url}):\n`;
+              if (page.error) {
+                body += `- Error scanning: ${page.error}\n`;
+              } else if (page.violations.length === 0) {
+                body += `- ✓ Zero violations\n`;
+              } else {
+                for (const violation of page.violations) {
+                  body += `- ⚠ ${violation.impact}: ${violation.id} (${violation.nodes} occurrences) — [more](${violation.helpUrl})\n`;
+                }
+              }
+              body += `\n`;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: body,
+            });

@@ -1,0 +1,17 @@
+node_modules
+/dist
+/.cache
+.env
+.env.*
+!.env.example
+.turbo
+.DS_Store
+*.log
+npm-debug.log*
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Design source zips / macOS extraction junk
+Design/__MACOSX
+**/.DS_Store

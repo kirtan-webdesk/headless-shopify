@@ -1,0 +1,103 @@
+# Shopify theme-check configuration baseline
+# Copy this to project root as .theme-check.yml
+# Per shopify/knowledge/01-coding-standards.md + 09-forbidden.md
+
+# Default checks enabled
+ConvertIncludeToRender:
+  enabled: true
+  severity: error  # Per LIQ-007 — {% include %} deprecated
+
+# Validate section / snippet syntax
+LiquidTag:
+  enabled: true
+  severity: error
+
+# Catch undefined object access
+UnusedAssign:
+  enabled: true
+  severity: suggestion
+
+# Image rules
+ImgWidthAndHeight:
+  enabled: true
+  severity: error  # Per PERF-001 — CLS prevention
+
+ImgLazyLoading:
+  enabled: true
+  severity: suggestion  # Per LIQ-005 — should be lazy for below-fold
+
+# Asset reference checks
+MissingAsset:
+  enabled: true
+  severity: error
+
+# Section schema checks
+SyntaxError:
+  enabled: true
+  severity: error
+
+ValidSchema:
+  enabled: true
+  severity: error
+
+# Performance checks
+ParserBlockingScript:
+  enabled: true
+  severity: warning
+
+RemoteAsset:
+  enabled: true
+  severity: warning
+
+ContentForHeader:
+  enabled: true
+  severity: error
+
+AssetSizeAppBlockCSS:
+  enabled: true
+  threshold_in_bytes: 100000
+
+AssetSizeAppBlockJavaScript:
+  enabled: true
+  threshold_in_bytes: 200000
+
+# Liquid best practices
+RequiredTemplateFiles:
+  enabled: true
+  severity: error
+
+UnusedSnippet:
+  enabled: true
+  severity: warning
+
+UnusedSnippetFile:
+  enabled: true
+  severity: warning
+
+# Translation
+TranslationKeyExists:
+  enabled: true
+  severity: error
+
+MatchingTranslations:
+  enabled: true
+  severity: warning
+
+# Theme structure
+RequiredLayoutThemeObject:
+  enabled: true
+  severity: error
+
+ValidJson:
+  enabled: true
+  severity: error
+
+# Disable noisy checks (re-enable per-project if needed)
+PaginationSize:
+  enabled: false
+
+# Ignore patterns
+ignore:
+  - "node_modules/**"
+  - ".github/**"
+  - "agency/**"

@@ -1,0 +1,212 @@
+name: Shopify Theme Publish (LIVE)
+
+# Publishes theme to live store. Requires approval via GitHub Environment protection.
+# Per A7 + _spine/delivery-head/knowledge/02-publish-protocol.md
+#
+# CRITICAL: This workflow REQUIRES backup of current live theme BEFORE publishing.
+# Per F12 — backup is mandatory, non-skippable.
+
+on:
+  push:
+    branches:
+      - main
+
+# This workflow uses GitHub Environments for required reviewers + secrets scoping.
+# Configure in: Repo Settings → Environments → production
+# Add required reviewer(s) + production-only secrets.
+
+jobs:
+  backup-live-theme:
+    name: 1. Backup current live theme
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Shopify CLI
+        run: npm install -g @shopify/cli@latest @shopify/theme@latest
+
+      - name: Create backup of live theme
+        env:
+          SHOPIFY_CLI_THEME_TOKEN: ${{ secrets.SHOPIFY_CLI_THEME_TOKEN }}
+          SHOPIFY_STORE_URL: ${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_LIVE_THEME_ID: ${{ secrets.SHOPIFY_LIVE_THEME_ID }}
+        run: |
+          # Get backup date
+          BACKUP_DATE=$(date +%Y-%m-%d-%H%M)
+          BACKUP_NAME="[Backup] Live - $BACKUP_DATE"
+
+          # Note: Shopify CLI's duplicate theme feature may not be available in all versions.
+          # The reliable approach: pull live theme as files, then push as new unpublished theme.
+          mkdir -p /tmp/live-backup
+          cd /tmp/live-backup
+
+          shopify theme pull \
+            --store "$SHOPIFY_STORE_URL" \
+            --theme "$SHOPIFY_LIVE_THEME_ID" \
+            --path .
+
+          # Push as new unpublished theme (becomes the backup)
+          shopify theme push \
+            --store "$SHOPIFY_STORE_URL" \
+            --unpublished \
+            --theme-name "$BACKUP_NAME" \
+            --path .
+
+          echo "✓ Backup created: $BACKUP_NAME"
+          echo "BACKUP_NAME=$BACKUP_NAME" >> $GITHUB_ENV
+
+      - name: Verify backup exists
+        env:
+          SHOPIFY_CLI_THEME_TOKEN: ${{ secrets.SHOPIFY_CLI_THEME_TOKEN }}
+          SHOPIFY_STORE_URL: ${{ secrets.SHOPIFY_STORE_URL }}
+        run: |
+          # List themes and verify our backup is there
+          shopify theme list --store "$SHOPIFY_STORE_URL" | grep -F "$BACKUP_NAME" || {
+            echo "ERROR: Backup verification FAILED. Aborting publish."
+            exit 1
+          }
+
+  publish-to-live:
+    name: 2. Push to live theme
+    needs: backup-live-theme
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Shopify CLI
+        run: npm install -g @shopify/cli@latest @shopify/theme@latest
+
+      - name: Push to live theme
+        env:
+          SHOPIFY_CLI_THEME_TOKEN: ${{ secrets.SHOPIFY_CLI_THEME_TOKEN }}
+          SHOPIFY_STORE_URL: ${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_LIVE_THEME_ID: ${{ secrets.SHOPIFY_LIVE_THEME_ID }}
+        run: |
+          shopify theme push \
+            --store "$SHOPIFY_STORE_URL" \
+            --theme "$SHOPIFY_LIVE_THEME_ID" \
+            --path . \
+            --nodelete
+
+      - name: Tag the release
+        run: |
+          TAG_NAME="v1.0.0-launch-$(date +%Y-%m-%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG_NAME" -m "Live theme published"
+          git push origin "$TAG_NAME"
+
+  post-deploy-health-check:
+    name: 3. Post-deploy health check
+    needs: publish-to-live
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps chromium
+
+      - name: Run health check
+        env:
+          SHOPIFY_STORE_URL: ${{ secrets.SHOPIFY_STORE_URL }}
+        run: |
+          cat << 'EOF' > health-check.js
+          const { chromium } = require('@playwright/test');
+
+          const STORE_URL = process.env.SHOPIFY_STORE_URL;
+          const checks = [];
+
+          (async () => {
+            const browser = await chromium.launch();
+            const context = await browser.newContext();
+            const page = await context.newPage();
+
+            // Check 1: Homepage loads with 200
+            try {
+              const response = await page.goto(`https://${STORE_URL}/`);
+              checks.push({ check: 'Homepage HTTP 200', status: response.status() === 200 ? 'PASS' : 'FAIL', detail: `Got ${response.status()}` });
+            } catch (e) {
+              checks.push({ check: 'Homepage HTTP 200', status: 'FAIL', detail: e.message });
+            }
+
+            // Check 2: Homepage has expected content (not error page)
+            try {
+              const title = await page.title();
+              checks.push({ check: 'Homepage has title', status: title && title.length > 0 ? 'PASS' : 'FAIL', detail: `Title: ${title}` });
+            } catch (e) {
+              checks.push({ check: 'Homepage has title', status: 'FAIL', detail: e.message });
+            }
+
+            // Check 3: Add to cart endpoint responds
+            try {
+              const response = await page.request.get(`https://${STORE_URL}/cart.js`);
+              checks.push({ check: 'Cart endpoint responds', status: response.status() === 200 ? 'PASS' : 'FAIL', detail: `Got ${response.status()}` });
+            } catch (e) {
+              checks.push({ check: 'Cart endpoint responds', status: 'FAIL', detail: e.message });
+            }
+
+            // Check 4: SSL certificate valid
+            try {
+              const response = await page.goto(`https://${STORE_URL}/`);
+              const url = response.url();
+              checks.push({ check: 'HTTPS enforced', status: url.startsWith('https://') ? 'PASS' : 'FAIL', detail: url });
+            } catch (e) {
+              checks.push({ check: 'HTTPS enforced', status: 'FAIL', detail: e.message });
+            }
+
+            await browser.close();
+
+            console.log(JSON.stringify(checks, null, 2));
+            require('fs').writeFileSync('health-check.json', JSON.stringify(checks, null, 2));
+
+            // Fail if any check failed
+            const failed = checks.filter(c => c.status === 'FAIL');
+            if (failed.length > 0) {
+              console.error('Health check failed:', failed);
+              process.exit(1);
+            }
+          })();
+          EOF
+
+          node health-check.js
+
+      - name: Notify on health check pass
+        if: success()
+        run: |
+          echo "✓ Post-deploy health check PASSED"
+          echo "Launch confirmed. Notify team + client via Internal PM."
+
+      - name: Notify on health check fail
+        if: failure()
+        run: |
+          echo "🚨 Post-deploy health check FAILED"
+          echo "Trigger rollback per _spine/delivery-head/knowledge/03-rollback-procedure.md"
+          # In production, this should trigger an alert
+          # Could integrate with PagerDuty, Slack, etc.
+          exit 1

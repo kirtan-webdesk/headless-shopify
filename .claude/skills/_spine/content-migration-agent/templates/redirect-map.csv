@@ -1,0 +1,46 @@
+source_url,target_url,redirect_type,priority,reason
+# Homepage and core pages
+/,/,canonical,high,no_change_homepage
+/about,/pages/about,301,high,about_page_path_change
+/contact,/pages/contact,301,high,contact_page_path_change
+# Product URLs (preserve handle/slug pattern)
+/products/aurora-cleanser,/products/aurora-cleanser,canonical,high,direct_match
+/products/aurora-cleanser-100ml,/products/aurora-cleanser,301,medium,merged_variant_into_parent
+/products/aurora-cleanser?utm=email,/products/aurora-cleanser,canonical,low,canonical_tag_handles_parameters
+# Collection URLs (path change category -> collections)
+/category/skincare,/collections/skincare,301,high,category_to_collection_path_change
+/category/skincare/page/2,/collections/skincare?page=2,301,low,pagination_pattern_change
+/category/skincare/serums,/collections/serums,301,high,subcategory_promoted_to_collection
+# Blog URLs (path change)
+/blog/article-1,/blogs/news/article-1,301,medium,blog_path_change
+/blog/category/skincare-tips,/blogs/news?tag=skincare-tips,301,low,blog_category_to_tag_filter
+/blog/author/jane-smith,/pages/about,301,low,author_pages_consolidated
+# Tag URLs (consolidated to collections where possible)
+/tag/sustainable,/collections/sustainable,301,medium,tag_to_collection
+/tag/best-sellers,/collections/best-sellers,301,medium,tag_to_collection
+# Cart and checkout
+/cart,/cart,canonical,high,no_change_cart
+/checkout,/checkout,canonical,high,no_change_checkout
+# Account
+/account,/account,canonical,high,no_change_account
+/account/orders,/account/orders,canonical,high,no_change
+/account/wishlist,/account/favorites,301,medium,wishlist_renamed_to_favorites
+# Discontinued products (redirect to closest replacement or category)
+/products/discontinued-product-1,/collections/skincare,301,low,discontinued_product_to_category
+/products/legacy-product-old-sku,/products/aurora-cleanser,301,low,sku_replaced_by_new_product
+# Old promotion / landing pages
+/old-promotion-page,/collections/sale,301,medium,outdated_landing_to_current_sale
+/black-friday-2024,/collections/sale,301,low,seasonal_landing_to_evergreen
+# Search and other utility
+/search,/search,canonical,medium,no_change_search
+/faq,/pages/faq,301,medium,faq_page_path_change
+/sitemap,/pages/sitemap,301,low,sitemap_page_path_change
+/sitemap.xml,/sitemap.xml,canonical,high,no_change_sitemap_file
+/robots.txt,/robots.txt,canonical,high,no_change_robots_file
+# Legacy / outdated URLs
+/legacy-promotion,/collections/sale,301,low,legacy_promo_to_current_sale
+/coupon-old,/pages/discount-codes,301,low,coupon_path_change
+# Special case: chained redirect inherited from source (developer approved per I17)
+/very-old-product,/legacy-redirect-target,301,low,existing_chain_inherited_developer_approved_2026-05-15
+# Note: keep this CSV updated as new redirects are discovered
+# Note: redirects are FOREVER — never delete entries, only deprecate with comments

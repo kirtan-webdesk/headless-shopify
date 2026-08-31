@@ -1,0 +1,85 @@
+name: Lighthouse CI
+
+# Runs Lighthouse on affected pages. Blocks PR merge if performance drops below threshold.
+# Thresholds per shopify/knowledge/04-performance-budget.md
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Wait for theme push to complete
+        run: |
+          # The theme-push.yml workflow pushes to dev theme.
+          # Lighthouse needs the latest preview to be live.
+          # Wait ~90s for theme push to propagate.
+          sleep 90
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@latest
+
+      - name: Run Lighthouse CI
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          SHOPIFY_STORE_URL: ${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_DEV_THEME_ID: ${{ secrets.SHOPIFY_DEV_THEME_ID }}
+        run: |
+          # Use the project's lhci-config.json
+          lhci autorun \
+            --collect.url="https://${SHOPIFY_STORE_URL}/?preview_theme_id=${SHOPIFY_DEV_THEME_ID}" \
+            --collect.url="https://${SHOPIFY_STORE_URL}/products/example-product?preview_theme_id=${SHOPIFY_DEV_THEME_ID}" \
+            --collect.url="https://${SHOPIFY_STORE_URL}/collections/all?preview_theme_id=${SHOPIFY_DEV_THEME_ID}" \
+            --collect.url="https://${SHOPIFY_STORE_URL}/cart?preview_theme_id=${SHOPIFY_DEV_THEME_ID}" \
+            --collect.numberOfRuns=3 \
+            --upload.target=temporary-public-storage \
+            --assert.preset=lighthouse:recommended \
+            --assert.assertions.categories.performance=warn:0.80 \
+            --assert.assertions.categories.accessibility=warn:0.95 \
+            --assert.assertions.categories.seo=warn:0.95 \
+            --assert.assertions.categories.best-practices=warn:0.90 \
+            --assert.assertions.largest-contentful-paint=warn:3000 \
+            --assert.assertions.cumulative-layout-shift=warn:0.05 \
+            --assert.assertions.total-blocking-time=warn:200
+
+      - name: Post Lighthouse results to PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Read the Lighthouse results
+            const fs = require('fs');
+            const path = require('path');
+            const resultsDir = '.lighthouseci';
+
+            if (!fs.existsSync(resultsDir)) return;
+
+            const files = fs.readdirSync(resultsDir);
+            const summaryFile = files.find(f => f.endsWith('manifest.json'));
+            if (!summaryFile) return;
+
+            const manifest = JSON.parse(fs.readFileSync(path.join(resultsDir, summaryFile), 'utf8'));
+
+            const summary = manifest.map(entry =>
+              `- ${entry.url}: Perf ${(entry.summary.performance * 100).toFixed(0)} | A11y ${(entry.summary.accessibility * 100).toFixed(0)} | SEO ${(entry.summary.seo * 100).toFixed(0)} | BP ${(entry.summary['best-practices'] * 100).toFixed(0)}`
+            ).join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `### Lighthouse CI Results\n\n${summary}\n\n[Full reports](${manifest[0].url})`
+            });

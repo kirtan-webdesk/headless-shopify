@@ -1,0 +1,1088 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://webdesksolution.ca/schemas/project.json",
+  "title": "WebDesk Project State Schema",
+  "description": "Single source of truth for every project. Every agent reads this file at start of turn, writes at end. Atomic, locked, versioned.",
+  "type": "object",
+  "required": [
+    "project",
+    "sow",
+    "scope",
+    "milestones",
+    "gates",
+    "audit_log",
+    "budget",
+    "lock",
+    "platform"
+  ],
+  "properties": {
+    "project": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "platform",
+        "project_type",
+        "status",
+        "schema_version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID v4"
+        },
+        "name": {
+          "type": "string"
+        },
+        "schema_version": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "primary_contact": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "role": {
+                  "type": "string"
+                }
+              }
+            },
+            "billing_contact": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                }
+              }
+            },
+            "timezone": {
+              "type": "string",
+              "description": "IANA timezone, e.g., America/Toronto"
+            }
+          }
+        },
+        "store_url": {
+          "type": "string",
+          "description": "Production URL or shop domain"
+        },
+        "staging_url": {
+          "type": "string"
+        },
+        "dev_url": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "shopify",
+            "wordpress",
+            "bigcommerce",
+            "nodejs",
+            "magento"
+          ]
+        },
+        "platform_version": {
+          "type": "string",
+          "description": "e.g., 'Online Store 2.0', 'WordPress 6.5', 'Magento 2.4.7'"
+        },
+        "project_type": {
+          "type": "string",
+          "enum": [
+            "new-development",
+            "redesign",
+            "migration",
+            "version-upgrade",
+            "maintenance"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "intake",
+            "planning",
+            "design",
+            "development",
+            "qa",
+            "staging",
+            "launching",
+            "delivered",
+            "archived",
+            "on-hold",
+            "cancelled"
+          ]
+        },
+        "assigned_team": {
+          "type": "object",
+          "properties": {
+            "pm": {
+              "type": "string"
+            },
+            "designer": {
+              "type": "string"
+            },
+            "frontend_lead": {
+              "type": "string"
+            },
+            "backend_lead": {
+              "type": "string"
+            },
+            "qa_lead": {
+              "type": "string"
+            },
+            "delivery_head": {
+              "type": "string"
+            }
+          }
+        },
+        "repository": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "default_branch": {
+              "type": "string",
+              "default": "main"
+            },
+            "develop_branch": {
+              "type": "string",
+              "default": "develop"
+            }
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Increments on every write"
+        }
+      }
+    },
+    "lock": {
+      "type": "object",
+      "description": "Mutex for atomic writes. Prevents race conditions across agents.",
+      "required": [
+        "locked"
+      ],
+      "properties": {
+        "locked": {
+          "type": "boolean"
+        },
+        "locked_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Agent name or human ID"
+        },
+        "locked_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "max_lock_duration_seconds": {
+          "type": "integer",
+          "default": 300
+        }
+      }
+    },
+    "sow": {
+      "type": "object",
+      "required": [
+        "raw_text",
+        "version",
+        "received_at",
+        "completeness_score"
+      ],
+      "properties": {
+        "raw_text": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "sales-handoff",
+            "client-direct",
+            "rfp-response",
+            "renewal"
+          ]
+        },
+        "version": {
+          "type": "integer"
+        },
+        "received_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completeness_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "How complete is the SOW. < 60 blocks intake, agent must request clarification."
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Missing required fields"
+        },
+        "clarification_responses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question_id": {
+                "type": "string"
+              },
+              "question": {
+                "type": "string"
+              },
+              "answer": {
+                "type": "string"
+              },
+              "answered_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "answered_by": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "deliverables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "acceptance_criteria"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "acceptance_criteria": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "integrations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "payment",
+                  "shipping",
+                  "tax",
+                  "email",
+                  "analytics",
+                  "review",
+                  "subscription",
+                  "inventory",
+                  "crm",
+                  "erp",
+                  "other"
+                ]
+              },
+              "responsible_party": {
+                "type": "string",
+                "enum": [
+                  "agency",
+                  "client",
+                  "third-party"
+                ]
+              },
+              "api_credentials_received": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "content_responsibility": {
+          "type": "object",
+          "properties": {
+            "copy": {
+              "type": "string",
+              "enum": [
+                "agency",
+                "client",
+                "shared"
+              ]
+            },
+            "images": {
+              "type": "string",
+              "enum": [
+                "agency",
+                "client",
+                "shared"
+              ]
+            },
+            "products": {
+              "type": "string",
+              "enum": [
+                "agency",
+                "client",
+                "shared"
+              ]
+            },
+            "blog_content": {
+              "type": "string",
+              "enum": [
+                "agency",
+                "client",
+                "shared",
+                "not-included"
+              ]
+            }
+          }
+        },
+        "out_of_scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Explicit list of what is NOT included"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "estimates": {
+      "type": "object",
+      "properties": {
+        "total_hours": {
+          "type": "number"
+        },
+        "total_weeks": {
+          "type": "number"
+        },
+        "by_milestone": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "milestone_id": {
+                "type": "string"
+              },
+              "estimated_hours": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "sow_timeline_weeks": {
+          "type": "number"
+        },
+        "vs_sow_timeline": {
+          "type": "string",
+          "enum": [
+            "on-track",
+            "tight",
+            "overrun"
+          ]
+        },
+        "renegotiation_flagged": {
+          "type": "boolean",
+          "default": false
+        },
+        "renegotiation_reason": {
+          "type": "string"
+        }
+      }
+    },
+    "design": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "enum": [
+            "theme-customization",
+            "fully-custom",
+            "marketplace-theme",
+            "headless",
+            "figma-import",
+            "page-builder"
+          ]
+        },
+        "base_theme": {
+          "type": "string"
+        },
+        "figma_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "design_tokens_path": {
+          "type": "string",
+          "description": "Path to design-tokens.json"
+        },
+        "section_map_path": {
+          "type": "string",
+          "description": "Path to section-map.json"
+        },
+        "visual_mockup_url": {
+          "type": "string",
+          "description": "Required: client-facing visual approval artifact"
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "approved_by": {
+          "type": "string"
+        }
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "sprints"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^M[0-9]+$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "qa",
+              "done",
+              "blocked"
+            ]
+          },
+          "sprints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "status",
+                "acceptance_criteria"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^S[0-9]+\\.[0-9]+$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "scope": {
+                  "type": "string"
+                },
+                "acceptance_criteria": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "active",
+                    "qa",
+                    "done",
+                    "blocked"
+                  ]
+                },
+                "estimated_hours": {
+                  "type": "number"
+                },
+                "actual_hours": {
+                  "type": "number"
+                },
+                "branch": {
+                  "type": "string",
+                  "description": "Git branch name"
+                },
+                "pr_url": {
+                  "type": "string"
+                },
+                "qa_passed": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "human_confirmed": {
+                  "type": "boolean",
+                  "default": false
+                }
+              }
+            }
+          },
+          "milestone_qa_passed": {
+            "type": "boolean",
+            "default": false
+          },
+          "milestone_confirmed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "active": {
+      "type": "object",
+      "properties": {
+        "milestone_id": {
+          "type": "string"
+        },
+        "sprint_id": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "intake",
+            "planning",
+            "design",
+            "scaffolding",
+            "development",
+            "sprint-qa",
+            "milestone-qa",
+            "pre-launch",
+            "launch",
+            "handoff"
+          ]
+        },
+        "agent": {
+          "type": "string"
+        },
+        "blocked_on": {
+          "type": "string",
+          "description": "What's blocking progress, if anything"
+        }
+      }
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "sow-validation",
+              "plan-approval",
+              "design-approval",
+              "scaffold-verification",
+              "sprint-qa",
+              "milestone-regression",
+              "pre-launch"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "description": "Sprint ID, milestone ID, or 'project'"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "open",
+              "passed",
+              "failed",
+              "expired"
+            ]
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sla_hours": {
+            "type": "integer",
+            "default": 24
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "primary_approver": {
+            "type": "string"
+          },
+          "backup_approver": {
+            "type": "string"
+          },
+          "decided_by": {
+            "type": "string"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "CONFIRM",
+              "REJECT",
+              "REVISE",
+              "RENEGOTIATE"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "escalation_log": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "action": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "probability": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "mitigation": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "mitigated",
+              "realized",
+              "closed"
+            ]
+          }
+        }
+      }
+    },
+    "bugs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "P1",
+              "P2",
+              "P3",
+              "P4"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "steps_to_reproduce": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "found_in_sprint": {
+            "type": "string"
+          },
+          "found_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "found_by": {
+            "type": "string"
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in-progress",
+              "fixed",
+              "verified",
+              "wontfix"
+            ]
+          },
+          "sla_hours": {
+            "type": "integer"
+          },
+          "resolved_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "audit_log": {
+      "type": "array",
+      "description": "Append-only log of every state-changing action",
+      "items": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "actor",
+          "action"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string",
+            "description": "Agent name or human ID"
+          },
+          "actor_type": {
+            "type": "string",
+            "enum": [
+              "agent",
+              "human",
+              "system"
+            ]
+          },
+          "action": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          },
+          "project_version_before": {
+            "type": "integer"
+          },
+          "project_version_after": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "token_cap": {
+          "type": "integer",
+          "description": "Hard cap on API tokens for this project"
+        },
+        "token_used": {
+          "type": "integer",
+          "default": 0
+        },
+        "token_alert_threshold": {
+          "type": "integer",
+          "description": "Alert when this many tokens used"
+        },
+        "hours_budget": {
+          "type": "number",
+          "description": "Quoted hours"
+        },
+        "hours_burned": {
+          "type": "number",
+          "default": 0
+        },
+        "cost_estimate_usd": {
+          "type": "number"
+        },
+        "alerts_sent": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "token-threshold",
+                  "hours-threshold",
+                  "cap-reached"
+                ]
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "References to generated artifacts. Paths relative to project workspace.",
+      "properties": {
+        "spec_path": {
+          "type": "string"
+        },
+        "design_tokens_path": {
+          "type": "string"
+        },
+        "section_map_path": {
+          "type": "string"
+        },
+        "milestones_path": {
+          "type": "string"
+        },
+        "redirect_map_path": {
+          "type": "string"
+        },
+        "qa_reports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "handoff_blocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "client_report_path": {
+          "type": "string"
+        },
+        "handoff_guide_path": {
+          "type": "string"
+        }
+      }
+    },
+    "client_contact_blocklist": {
+      "type": "object",
+      "description": "FLAG-004 enforcement. Outbound comms gate consults this before any send. Per v1.5.2 Tier A.",
+      "properties": {
+        "emails": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "email"
+          },
+          "description": "Direct client email addresses to block"
+        },
+        "phones": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Client phone numbers (E.164 format preferred)"
+        },
+        "handles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Social/messaging handles owned by client"
+        },
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Client-owned domains (suffix match)"
+        },
+        "webhooks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Client-controlled webhook URLs (glob patterns supported)"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "enforced_since": {
+          "type": "string",
+          "format": "date"
+        },
+        "override_protocol": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "emails",
+        "rationale"
+      ]
+    },
+    "allowlist_internal_pm": {
+      "type": "object",
+      "description": "Only authorized client-facing contact channels",
+      "properties": {
+        "emails": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "rationale": {
+          "type": "string"
+        }
+      }
+    },
+    "token_used": {
+      "type": "object",
+      "description": "Token tracking per v1.5.2 Tier D",
+      "properties": {
+        "total_input": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_output": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_cache_read": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_cache_write": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "estimated_cost_usd": {
+          "type": "number"
+        },
+        "per_agent": {
+          "type": "object"
+        },
+        "per_session": {
+          "type": "array"
+        }
+      }
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "shopify",
+        "shopify-plus",
+        "bigcommerce",
+        "magento",
+        "adobe-commerce",
+        "wordpress",
+        "woocommerce"
+      ],
+      "description": "Commerce platform for this project. Determines which platform forbidden.md is loaded alongside forbidden-global.md. Per v1.5.4 D-PLAT-01."
+    }
+  }
+}

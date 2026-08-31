@@ -1,0 +1,164 @@
+name: AI Code Review
+
+# Runs Code Review Agent (per H4 — custom Claude API review) on every PR.
+# Posts structured review comments + blocks merge on P1/P2 findings.
+# Honors cost guardrails per _spine/code-review-agent/knowledge/04-cost-guardrails.md
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: code-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  ai-review:
+    # Only run on PR events OR explicit /review comment
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       startsWith(github.event.comment.body, '/review'))
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      pull-requests: write
+      contents: read
+      statuses: write
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic requests
+
+      - name: Get PR info
+        id: pr-info
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.issue.number }}"
+          BASE_REF="${{ github.event.pull_request.base.ref || 'develop' }}"
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
+
+      - name: Get PR diff
+        id: pr-diff
+        run: |
+          git fetch origin ${{ steps.pr-info.outputs.base_ref }}
+          git diff origin/${{ steps.pr-info.outputs.base_ref }}...HEAD > pr.diff
+          DIFF_LINES=$(git diff origin/${{ steps.pr-info.outputs.base_ref }}...HEAD --shortstat | awk '{print $4 + $6}')
+          echo "diff_lines=${DIFF_LINES:-0}" >> $GITHUB_OUTPUT
+
+      - name: Load KB context
+        run: |
+          mkdir -p /tmp/review-context
+
+          # Copy relevant Shopify KB files (adjust paths for your project)
+          # These should be available either in the repo or fetched from a central skills repo
+          if [ -d "skills/shopify/knowledge" ]; then
+            cp skills/shopify/knowledge/09-forbidden.md /tmp/review-context/ 2>/dev/null || true
+            cp skills/shopify/knowledge/01-coding-standards.md /tmp/review-context/ 2>/dev/null || true
+            cp skills/shopify/knowledge/02-naming-conventions.md /tmp/review-context/ 2>/dev/null || true
+            cp skills/shopify/knowledge/11-web-components.md /tmp/review-context/ 2>/dev/null || true
+          fi
+
+          # Copy CODEOWNERS for sensitive path detection
+          cp .github/CODEOWNERS /tmp/review-context/CODEOWNERS 2>/dev/null || true
+
+      - name: Run Claude code review
+        id: claude-review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+          DIFF_LINES: ${{ steps.pr-diff.outputs.diff_lines }}
+        run: |
+          python3 .github/scripts/run-code-review.py \
+            --diff pr.diff \
+            --context /tmp/review-context \
+            --pr-number "$PR_NUMBER" \
+            --output review-result.json
+
+      - name: Read review result
+        id: review-result
+        run: |
+          STATUS=$(jq -r '.status' review-result.json)
+          COST=$(jq -r '.cost_usd' review-result.json)
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "cost=$COST" >> $GITHUB_OUTPUT
+
+      - name: Post review comment
+        uses: actions/github-script@v7
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const fs = require('fs');
+            const reviewData = JSON.parse(fs.readFileSync('review-result.json', 'utf8'));
+
+            const body = reviewData.comment;
+
+            // Find existing review comment and update it, or create new
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ steps.pr-info.outputs.pr_number }},
+            });
+
+            const aiReviewComment = comments.data.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('🤖 AI Code Review')
+            );
+
+            if (aiReviewComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: aiReviewComment.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: ${{ steps.pr-info.outputs.pr_number }},
+                body: body,
+              });
+            }
+
+      - name: Set PR status check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.review-result.outputs.status }}';
+            const cost = '${{ steps.review-result.outputs.cost }}';
+
+            const description = status === 'PASS'
+              ? `✓ AI review passed ($${cost})`
+              : status === 'PASS_WITH_FLAGS'
+                ? `⚠ AI review passed with flags ($${cost})`
+                : `✗ AI review found blocking issues ($${cost})`;
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request?.head?.sha || context.sha,
+              state: status === 'FAIL' ? 'failure' : 'success',
+              description: description,
+              context: 'AI Code Review',
+            });
