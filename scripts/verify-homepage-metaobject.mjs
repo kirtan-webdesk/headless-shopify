@@ -9,7 +9,7 @@ import {readFileSync} from 'node:fs';
 function loadEnv() {
   const raw = readFileSync(new URL('../.env', import.meta.url), 'utf8');
   const env = {};
-  for (const line of raw.split('\n')) {
+  for (const line of raw.split(/\r\n|\n|\r/)) {
     const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
     if (match) env[match[1]] = match[2].trim();
   }

@@ -1,5 +1,6 @@
 import {Await, useLoaderData, Link} from 'react-router';
 import {Suspense} from 'react';
+import {Image} from '@shopify/hydrogen';
 import {MockShopNotice} from '~/components/MockShopNotice';
 
 /**
@@ -33,13 +34,19 @@ async function loadCriticalData({context}) {
 }
 
 /**
- * Metaobject `fields` comes back as [{key, value}, ...] -- flatten to {key: value}
- * so the component can read `homepage.hero_heading` directly.
- * @param {{fields: {key: string; value: string}[]} | null} metaobject
+ * Metaobject `fields` comes back as [{key, value, reference}, ...] -- flatten
+ * to {key: value} so the component can read `homepage.hero_heading` directly.
+ * `hero_image` is a file_reference field: `value` is just the raw MediaImage
+ * GID, the actual resolved image (url/altText/width/height) lives under
+ * `reference.image` -- surfaced separately as `homepage.heroImage`.
+ * @param {{fields: {key: string; value: string; reference: {image: {url: string; altText: string|null; width: number; height: number}} | null}[]}} metaobject
  */
 function metaobjectFieldsToObject(metaobject) {
   if (!metaobject) return null;
-  return Object.fromEntries(metaobject.fields.map((f) => [f.key, f.value]));
+  const flat = Object.fromEntries(metaobject.fields.map((f) => [f.key, f.value]));
+  const heroImageField = metaobject.fields.find((f) => f.key === 'hero_image');
+  flat.heroImage = heroImageField?.reference?.image ?? null;
+  return flat;
 }
 
 /**
@@ -160,20 +167,33 @@ function Hero({homepage}) {
           </div>
         </dl>
       </div>
-      {/* TEMPORARY: hero_image is a Metaobject field (file_reference) per
-          the S2.2 "no deploy" acceptance criteria, but the Admin API token
-          lacks write_files scope so it couldn't be uploaded into Shopify
-          Files this session (see project.json risks). Falls back to the
-          static reference asset for now -- swap to homepage.hero_image
-          once the scope is granted and scripts/upload-hero-image.mjs runs. */}
+      {/* hero_image is a Metaobject field (file_reference) -- genuinely
+          editable in Shopify admin with no deploy, per S2.2's acceptance
+          criteria. Uploaded via scripts/upload-hero-image.mjs once the
+          Admin API token had write_files scope. Falls back to the static
+          reference asset only if the field is ever cleared in admin,
+          so editing/removing it can never produce a broken image. */}
       <div className="hero-photo">
-        <img
-          src="/images/hero-car.jpg"
-          alt="A hand washing an orange car with PEARLS foaming soap"
-          width="800"
-          height="1000"
-          loading="eager"
-        />
+        {homepage.heroImage ? (
+          <Image
+            data={homepage.heroImage}
+            aspectRatio="4/5"
+            alt={
+              homepage.heroImage.altText ||
+              'A hand washing an orange car with PEARLS foaming soap'
+            }
+            sizes="(min-width: 60em) 50vw, 100vw"
+            loading="eager"
+          />
+        ) : (
+          <img
+            src="/images/hero-car.jpg"
+            alt="A hand washing an orange car with PEARLS foaming soap"
+            width="800"
+            height="1000"
+            loading="eager"
+          />
+        )}
       </div>
     </section>
   );
@@ -185,6 +205,9 @@ function Hero({homepage}) {
 // the real Car Brite catalog is live with matching handles, this should
 // become a real Storefront API product query (see collections.all.jsx for
 // the pattern) rather than staying hardcoded. Flagged in HANDOFF.md.
+// Each pod has its own gradient in the reference (blue/purple/orange/teal/
+// amber, matching the product's own bottle color) -- NOT a single repeated
+// brand gradient. Sampled from the mockup image per pod.
 const PODS = [
   {
     step: 'Step 01',
@@ -193,6 +216,7 @@ const PODS = [
     description: 'Foaming bucket wash. Lifts grime without stripping wax.',
     price: '$24',
     image: '/images/pod-1.png',
+    gradient: 'linear-gradient(160deg, #4fa8dc, #1e3a6e)',
   },
   {
     step: 'Step 02',
@@ -201,6 +225,7 @@ const PODS = [
     description: 'Trim, paint, and bumpers. Cuts road film without the residue.',
     price: '$28',
     image: '/images/pod-2.png',
+    gradient: 'linear-gradient(160deg, #a755c2, #4a1d6e)',
   },
   {
     step: 'Step 03',
@@ -209,6 +234,7 @@ const PODS = [
     description: 'High-shine tire dressing. Sling-free and ceramic-safe.',
     price: '$26',
     image: '/images/pod-3.png',
+    gradient: 'linear-gradient(160deg, #f0793c, #9a3412)',
   },
   {
     step: 'Step 04',
@@ -217,6 +243,7 @@ const PODS = [
     description: 'Streak-free glass + crystal. Ammonia-free formula.',
     price: '$22',
     image: '/images/pod-4.png',
+    gradient: 'linear-gradient(160deg, #3fc9c9, #0e6e6e)',
   },
   {
     step: 'Step 05',
@@ -225,6 +252,7 @@ const PODS = [
     description: 'Dash, vinyl, and leather. Lifts grime to a matte finish.',
     price: '$26',
     image: '/images/pod-5.png',
+    gradient: 'linear-gradient(160deg, #c9922f, #7a4a12)',
   },
 ];
 
@@ -241,27 +269,51 @@ function PodSystem() {
       </p>
       <dl className="pod-system-stats">
         <div>
-          <dt>Concentrate, not water</dt>
-          <dd>Pods ship dry — you add the water at home, not pay to truck it around.</dd>
+          <dt>7</dt>
+          <dd>
+            <strong>Concentrate, not water</strong>
+            <span>
+              Pods ship dry — you add the water at home, not pay to truck it
+              around.
+            </span>
+          </dd>
         </div>
         <div>
-          <dt>0 measuring, ever</dt>
-          <dd>Each pod is pre-dosed to the exact ratio. Drop, fill, shake — done.</dd>
+          <dt>0</dt>
+          <dd>
+            <strong>Measuring, ever</strong>
+            <span>
+              Each pod is pre-dosed to the exact ratio. Drop, fill, shake —
+              done.
+            </span>
+          </dd>
         </div>
         <div>
-          <dt>pH balanced &amp; wax-safe</dt>
-          <dd>Tuned to protect ceramic coatings and the wax already on your paint.</dd>
+          <dt>pH</dt>
+          <dd>
+            <strong>Balanced &amp; wax-safe</strong>
+            <span>
+              Tuned to protect ceramic coatings and the wax already on your
+              paint.
+            </span>
+          </dd>
         </div>
         <div>
-          <dt>75yr pro-grade chemistry</dt>
-          <dd>The same lab formulas Car Brite has shipped to detailers since 1947.</dd>
+          <dt>75yr</dt>
+          <dd>
+            <strong>Pro-grade chemistry</strong>
+            <span>
+              The same lab formulas Car Brite has shipped to detailers since
+              1947.
+            </span>
+          </dd>
         </div>
       </dl>
 
       <div className="pod-grid">
         {PODS.map((pod) => (
           <article className="pod-card" key={pod.code}>
-            <div className="pod-card-media">
+            <div className="pod-card-media" style={{background: pod.gradient}}>
               <span className="collection-card-badge">{pod.step}</span>
               <img src={pod.image} alt={pod.name} width="320" height="320" loading="lazy" />
             </div>
@@ -441,10 +493,10 @@ function SubscriptionSection() {
 
 function Testimonials() {
   const social = [
-    {handle: '@audiboy.av', quote: 'Cleaner finish than my $300 detail.', by: 'Marcus · Brooklyn'},
-    {handle: '@detailing_carla', quote: 'The pods feel illegal. In the best way.', by: 'Carla · Phoenix'},
-    {handle: '@911_garage', quote: 'Wax-safe, ceramic-safe, sling-free. Real.', by: 'Devon · Austin'},
-    {handle: '@theweekendwash', quote: "My wife stole pod #3 for her boots. Send help.", by: 'Theo · Portland'},
+    {handle: '@audiboy.av', quote: 'Cleaner finish than my $300 detail.', by: 'Marcus · Brooklyn', image: '/images/social-1.jpg'},
+    {handle: '@detailing_carla', quote: 'The pods feel illegal. In the best way.', by: 'Carla · Phoenix', image: '/images/social-2.jpg'},
+    {handle: '@911_garage', quote: 'Wax-safe, ceramic-safe, sling-free. Real.', by: 'Devon · Austin', image: '/images/social-3.jpg'},
+    {handle: '@theweekendwash', quote: "My wife stole pod #3 for her boots. Send help.", by: 'Theo · Portland', image: '/images/social-4.jpg'},
   ];
   const reviews = [
     {
@@ -472,9 +524,18 @@ function Testimonials() {
       <div className="testimonials-social-grid">
         {social.map((s) => (
           <figure className="testimonial-social-card" key={s.handle}>
-            <figcaption className="testimonial-handle">{s.handle}</figcaption>
-            <blockquote>&ldquo;{s.quote}&rdquo;</blockquote>
-            <p className="testimonial-by">{s.by}</p>
+            <img
+              src={s.image}
+              alt={`Customer photo shared by ${s.handle}`}
+              width="320"
+              height="320"
+              loading="lazy"
+            />
+            <figcaption>
+              <span className="testimonial-handle">{s.handle}</span>
+              <blockquote>&ldquo;{s.quote}&rdquo;</blockquote>
+              <p className="testimonial-by">{s.by}</p>
+            </figcaption>
           </figure>
         ))}
       </div>
@@ -586,8 +647,8 @@ function NewsletterSection() {
       </div>
       <dl className="newsletter-stats">
         <div>
-          <dt>Free pod</dt>
-          <dd>First order</dd>
+          <dt>1</dt>
+          <dd>Free pod, first order</dd>
         </div>
         <div>
           <dt>4.9★</dt>
@@ -612,6 +673,16 @@ const HOMEPAGE_CONTENT_QUERY = `#graphql
       fields {
         key
         value
+        reference {
+          ... on MediaImage {
+            image {
+              url
+              altText
+              width
+              height
+            }
+          }
+        }
       }
     }
   }

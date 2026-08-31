@@ -383,7 +383,15 @@ export type HomepageContentQueryVariables = StorefrontAPI.Exact<{
 
 export type HomepageContentQuery = {
   metaobject?: StorefrontAPI.Maybe<{
-    fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
+    fields: Array<
+      Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'> & {
+        reference?: StorefrontAPI.Maybe<{
+          image?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Image, 'url' | 'altText' | 'width' | 'height'>
+          >;
+        }>;
+      }
+    >;
   }>;
 };
 
@@ -1361,7 +1369,7 @@ interface GeneratedQueryTypes {
     return: FooterQuery;
     variables: FooterQueryVariables;
   };
-  '#graphql\n  query HomepageContent {\n    metaobject(handle: {type: "homepage_content", handle: "main-homepage"}) {\n      fields {\n        key\n        value\n      }\n    }\n  }\n': {
+  '#graphql\n  query HomepageContent {\n    metaobject(handle: {type: "homepage_content", handle: "main-homepage"}) {\n      fields {\n        key\n        value\n        reference {\n          ... on MediaImage {\n            image {\n              url\n              altText\n              width\n              height\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: HomepageContentQuery;
     variables: HomepageContentQueryVariables;
   };

@@ -290,8 +290,8 @@ function NewsletterSignup() {
       </div>
       <dl className="newsletter-stats">
         <div>
-          <dt>Free pod</dt>
-          <dd>First order</dd>
+          <dt>1</dt>
+          <dd>Free pod, first order</dd>
         </div>
         <div>
           <dt>4.9★</dt>

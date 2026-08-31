@@ -28,8 +28,8 @@
       "develop_branch": "develop"
     },
     "created_at": "2026-08-31T11:24:51Z",
-    "updated_at": "2026-08-31T23:00:00Z",
-    "version": 17,
+    "updated_at": "2026-09-01T01:30:00Z",
+    "version": 22,
     "_headless_arm_notes": {
       "note": "project-json.schema.json's project_type enum has no 'new-build' value and platform enum has no 'headless' value, so this project is recorded as platform=shopify / project_type=new-development for schema compliance. The actual engagement, per headless/SKILL.md and sow-spec.md, is: headless_engagement_type=new-build (D-HL-TYPES-01 type 1), architecture=A (Hydrogen+Oxygen, D-HL-STACK-01).",
       "headless_engagement_type": "new-build",
@@ -65,7 +65,6 @@
       "production_store_swap — dev/test store (wds55) confirmed intentional for build phase; PUBLIC_STORE_DOMAIN + API tokens in .env MUST be swapped to the real Car Brite store before G6 pre-launch. Track this explicitly so it is not forgotten at launch.",
       "customer_privacy_consent_setup — Hydrogen scaffold logs a console error: [h2:error:Analytics.Provider] consent.checkoutDomain not set. Needs Customer Privacy / checkout domain configured in Shopify admin. Pre-existing scaffold requirement, not introduced by this session's changes.",
       "pdp_no_design_reference — confirmed again 2026-08-31: Design/Design/ contains ONLY Homepage Design/ and Collection page Design/ folders. No product-page mockup exists anywhere. PDP is styled consistently with the established brand system (navy/teal/purple, Halogen) but is not \"matched to a reference\" because none exists for it -- flagged explicitly, not silently assumed equivalent to home/collection.",
-      "shop_nav_mega_menu_not_built — \"The Routine\" 5-step block (Design/Design/*/​*.html, positioned before <main> on both reference pages) is a Shop-nav mega-menu dropdown, confirmed by: it does not appear in either static mockup JPG, and doesn't appear in the initial-load screenshot of either page. Removed from being a visible section (was wrongly built as one on the collection page). NOT yet built as an actual hover/click mega-menu -- this is a real gap in S2.3 (nav), tracked here rather than silently left implied-done.",
       "social_proof_images_unused — social-1.jpg..social-4.jpg were copied into public/images/ for the homepage testimonials section but the built Testimonials component uses text-only cards (matching what the reference DOM exposes for that section -- it wasn't clear the images belonged there specifically vs. elsewhere). Worth confirming placement before final QA."
     ],
     "clarification_responses": [
@@ -604,8 +603,8 @@
       "description": "Admin API token lacks write_files scope -- cannot upload images (e.g. hero photo) into Shopify Files programmatically. hero_image Metaobject field exists but is unset; homepage currently falls back to a static /images/hero-car.jpg asset instead of true no-deploy editability for that one field.",
       "probability": "high",
       "impact": "low",
-      "mitigation": "scripts/upload-hero-image.mjs is written and ready -- just needs the token's scopes updated (add write_files) in the custom app config, then re-run it and swap _index.jsx back to homepage.hero_image. Text/CTA content on the homepage IS already fully Metaobject-editable; only the photo itself is the gap.",
-      "status": "open"
+      "mitigation": "scripts/upload-hero-image.mjs is written and ready -- just needs the token's scopes updated (add write_files) in the custom app config, then re-run it and swap _index.jsx back to homepage.hero_image. Text/CTA content on the homepage IS already fully Metaobject-editable; only the photo itself is the gap. RESOLVED 2026-09-01: user granted write_files scope. scripts/upload-hero-image.mjs run successfully -- hero-car.jpg uploaded to Shopify Files (gid://shopify/MediaImage/44543119622442), set on the homepage_content/main-homepage hero_image field. app/routes/_index.jsx updated to query the field reference (reference { ... on MediaImage { image { url altText width height } } }) and render via Hydrogen Image component -- verified live: img src is now cdn.shopify.com, not the static asset. Static <img> fallback kept only for the case where the field is ever cleared in admin.",
+      "status": "mitigated"
     },
     {
       "id": "R8",
@@ -613,6 +612,30 @@
       "probability": "low",
       "impact": "high",
       "mitigation": "RESOLVED 2026-08-31 -- see audit_log entries this session. Root cause going forward: always check ALL files in a reference folder (not just the most obviously named one) and scroll/extract full-page DOM before treating any single screenshot as complete.",
+      "status": "mitigated"
+    },
+    {
+      "id": "R9",
+      "description": "Header.jsx was still 100% generic Hydrogen scaffold -- plain shop.name text instead of the \"PEARLS\" logo, and nav pulled from wds55's own configured Shopify menu (\"Home/Catalog/Contact\") instead of the mockup's \"Shop/How it Works/About Us/Contact Us\" with icon-based search/cart. Visible on every single page. Missed in the S2.2/S3.1/S3.2 build passes and the first mockup-fidelity recheck.",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "RESOLVED 2026-08-31 -- Header.jsx rebuilt with the real logo, static nav labels matching the mockup (consistent with how Footer.jsx already handles this), and real search/bag icon SVGs from the provided assets. Verified in browser desktop + mobile.",
+      "status": "mitigated"
+    },
+    {
+      "id": "R10",
+      "description": "Five helper scripts in scripts/ (env-reading via a hand-written regex parser) silently failed to read 8 of 9 .env keys due to Windows CRLF line endings -- JS regex `.` excludes `\\r`, and splitting only on `\\n` left a trailing `\\r` breaking the `$`-anchored match for every line except the literal last one in the file. The actual running app (Hydrogen/Vite's own env loader) was never affected -- confirmed by the live site rendering correctly throughout this session. Found while trying to run verify-homepage-metaobject.mjs for this review.",
+      "probability": "low",
+      "impact": "low",
+      "mitigation": "RESOLVED 2026-09-01 -- all 5 scripts (create-homepage-metaobject.mjs, create-homepage-metaobject-entry.mjs, update-homepage-metaobject-access.mjs, upload-hero-image.mjs, verify-homepage-metaobject.mjs) fixed to split on /\\r\\n|\\n|\\r/. Tooling-only bug, never affected production rendering.",
+      "status": "mitigated"
+    },
+    {
+      "id": "R11",
+      "description": "Pixel-level re-comparison against Pearls_HP.jpg found 4 remaining fidelity gaps the earlier passes missed: (1) all 5 pod cards used one uniform purple-navy gradient instead of 5 distinct per-product colors, (2) pod-system stats dropped the bold number/code prefix (7/0/pH/75yr), rendering only description text, (3) the 4 testimonial social cards had no photos at all despite the images already being copied into public/images/, (4) newsletter first stat was structured as Free-pod/First-order instead of 1/Free-pod-first-order.",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "RESOLVED 2026-09-01. Also caught and fixed a real bug during verification: hero photo briefly appeared as an empty gradient in one screenshot -- investigated via getBoundingClientRect/currentSrc rather than assumed; confirmed it was a stale browser-pane frame (same rendering quirk noted earlier this session), not a real defect -- currentSrc correctly showed an 800x1000 CDN image throughout.",
       "status": "mitigated"
     }
   ],
@@ -1147,6 +1170,83 @@
         ],
         "project_version_before": 16,
         "project_version_after": 17
+      }
+    },
+    {
+      "timestamp": "2026-08-31T23:45:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "header_rebuild_and_functional_verification",
+      "details": {
+        "trigger": "User provided a formal, detailed re-review brief insisting mockup-fidelity (not just dynamic data) is the acceptance bar, and asked for gap analysis + fixes + a structured final report.",
+        "header_fix": "components/Header.jsx rebuilt: real \"PEARLS / by Car Brite\" logo (was plain shop.name text), static nav \"Shop/How it Works/About Us/Contact Us\" (was wds55's own menu \"Home/Catalog/Contact\" -- did not match mockup), icon-based search + cart using the real provided SVGs (icon-search.svg, icon-bag.svg) with cart count badge (was text \"Search\"/\"Cart 0\"). components/PageLayout.jsx mobile-menu call site updated to match the simplified HeaderMenu signature.",
+        "functional_tests_run": [
+          "Add to Cart on PDP -- clicked for real, cart drawer opened with correct item/price/subtotal, header cart badge updated 0 -> 1. PASS.",
+          "Mobile responsive -- homepage (hero, pod system incl. 5-card grid, bundle bar, brand section) and collection page (filter tabs, product grid) checked at 375px. All stack/wrap correctly, no overflow. PASS.",
+          "Header mobile -- hamburger, sign-in, search, cart badge all fit without overflow (contrast with the reference HTML's OWN mobile nav bug, noted earlier this session -- this build does not replicate that bug). PASS."
+        ],
+        "project_version_before": 17,
+        "project_version_after": 18
+      }
+    },
+    {
+      "timestamp": "2026-09-01T00:15:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "metaobject_correctness_verified",
+      "details": {
+        "method": "Admin API read (scripts/read-homepage-metaobject-admin.mjs, new, read-only) after the Storefront-API-based verify script hit an unrelated \"Online Store channel is locked\" error on a raw fetch (missing Hydrogen-client-only headers, not a real defect -- the live app's own Storefront queries work fine, confirmed by live rendering all session).",
+        "definition_confirmed": "homepage_content, 12 correctly-typed field definitions, access.storefront = PUBLIC_READ (the earlier documented fix holds).",
+        "entry_confirmed": "main-homepage entry exists; every field value read via Admin API matches exactly what is rendering live on the homepage (hero_heading, hero_heading_highlight, hero_subtext, both CTAs, all 3 announcement messages).",
+        "known_gap_reconfirmed": "hero_image field value is null -- Admin API token lacks write_files scope, so the file_reference field was never populated; app/routes/_index.jsx correctly falls back to a static asset rather than rendering broken. Already documented pre-existing gap, not new.",
+        "project_version_before": 18,
+        "project_version_after": 19
+      }
+    },
+    {
+      "timestamp": "2026-09-01T00:30:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "handoff_archived",
+      "details": {
+        "reason": "HANDOFF.md exceeded its own 200-line cap (was 152 and about to grow further this turn)",
+        "archived_to": "docs/session-handoffs/2026-08-31-car-brite.md",
+        "new_line_count": 52,
+        "project_version_before": 19,
+        "project_version_after": 20
+      }
+    },
+    {
+      "timestamp": "2026-09-01T01:00:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "remaining_gaps_resolved",
+      "details": {
+        "trigger": "User confirmed write_files Admin API scope was added; asked to re-review and resolve all remaining differences from the prior gap-analysis report.",
+        "hero_image": "RESOLVED. Ran scripts/upload-hero-image.mjs (already existed, was blocked). Verified via GraphQL query update + browser network inspection that the hero photo is now genuinely Metaobject-driven (cdn.shopify.com URL), not a static asset. Graceful static fallback kept for if the field is ever cleared.",
+        "shop_nav_mega_menu": "RESOLVED. Built as an actual interactive component (Header.jsx ShopMegaMenuItem) using CSS :hover/:focus-within (no JS state, degrades to a plain link if CSS fails). Content matches the reference DOM exactly. Verified in browser -- opens correctly. Found and fixed a real positioning bug during verification: initial centered layout (transform: translateX(-50%)) clipped off the left edge of the viewport since the Shop link sits near the header's left edge -- changed to left-aligned.",
+        "pdp_mockup_still_missing": "NOT resolved -- cannot be resolved without the actual file. Re-confirmed by listing Design/ again: only Homepage Design/ and Collection page Design/ exist. Flagged explicitly in the response rather than silently left implied-done.",
+        "project_version_before": 20,
+        "project_version_after": 21
+      }
+    },
+    {
+      "timestamp": "2026-09-01T01:30:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "homepage_pixel_fidelity_pass_2",
+      "details": {
+        "trigger": "User: homepage is ~70% matching, wants 100%.",
+        "method": "Re-opened Pearls_HP.jpg at full resolution, compared section by section against the live render rather than relying on memory of the earlier pass.",
+        "fixes": [
+          "app/routes/_index.jsx PODS array: added a distinct gradient per product (5 unique color pairs), applied via inline style on .pod-card-media -- removed the old uniform CSS gradient.",
+          "pod-system-stats restructured: dt now holds just the short stat (7/0/pH/75yr) styled large+bold+purple, dd holds a <strong> label + <span> description -- matches the mockup's number-callout pattern (same pattern already correctly used in hero-stats, just not applied here).",
+          "Testimonials social cards: added real photos (social-1..4.jpg, already-copied but previously unused assets) with a dark gradient overlay caption, matching the reference's Instagram-style treatment.",
+          "Newsletter first stat fixed in all 3 places it's duplicated (_index.jsx, collections.all.jsx, collections..jsx): dt=\"1\"/dd=\"Free pod, first order\" instead of dt=\"Free pod\"/dd=\"First order\"."
+        ],
+        "verification": "Rebuilt, ran dev server, verified all 4 fixes render correctly in browser (desktop + mobile 375px), confirmed via DOM/computed-style inspection not just screenshots (e.g. read newsletter dt/dd text nodes directly, checked hero img currentSrc when a screenshot looked wrong before concluding it was a tool artifact not a real bug).",
+        "project_version_before": 21,
+        "project_version_after": 22
       }
     }
   ],

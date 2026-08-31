@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 function loadEnv() {
   const text = readFileSync(new URL('../.env', import.meta.url), 'utf8');
   const env = {};
-  for (const line of text.split('\n')) {
+  for (const line of text.split(/\r\n|\n|\r/)) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) continue;
     const eq = trimmed.indexOf('=');
