@@ -28,8 +28,8 @@
       "develop_branch": "develop"
     },
     "created_at": "2026-08-31T11:24:51Z",
-    "updated_at": "2026-09-01T01:30:00Z",
-    "version": 22,
+    "updated_at": "2026-09-01T06:45:00Z",
+    "version": 31,
     "_headless_arm_notes": {
       "note": "project-json.schema.json's project_type enum has no 'new-build' value and platform enum has no 'headless' value, so this project is recorded as platform=shopify / project_type=new-development for schema compliance. The actual engagement, per headless/SKILL.md and sow-spec.md, is: headless_engagement_type=new-build (D-HL-TYPES-01 type 1), architecture=A (Hydrogen+Oxygen, D-HL-STACK-01).",
       "headless_engagement_type": "new-build",
@@ -636,6 +636,54 @@
       "probability": "low",
       "impact": "medium",
       "mitigation": "RESOLVED 2026-09-01. Also caught and fixed a real bug during verification: hero photo briefly appeared as an empty gradient in one screenshot -- investigated via getBoundingClientRect/currentSrc rather than assumed; confirmed it was a stale browser-pane frame (same rendering quirk noted earlier this session), not a real defect -- currentSrc correctly showed an 800x1000 CDN image throughout.",
+      "status": "mitigated"
+    },
+    {
+      "id": "R12",
+      "description": "PM Agent adherence verification (S2.2/S3.1/S3.2, design-fidelity focus) run in response to client report that delivered pages match the reference design only ~30-40%. Root cause: every prior fix round verified the build against a general visual impression of the mockup, not the literal field-by-field extraction that car_brite_home_page_design_details.md / car_brite_collection_page_design_details.md themselves mandate (both files are templates with ~60 unresolved [EXTRACT FROM HTML] markers each -- exact colors, spacing, typography, radii, shadows -- never individually resolved against the real Design/ HTML+CSS). Confirmed the client-provided design reference itself was complete and correctly pointed to from sow-spec.md -- this is a build-verification process gap, not a missing-input gap.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Report filed: docs/adherence-reports/sprint-S2.2-design-adherence.md. Recommended remediation: resolve every [EXTRACT FROM HTML] marker in both design-details.md files against the real Design/ HTML+CSS (not the JPG by eye), diff resolved values against live _index.jsx/collections routes/app.css field by field, fix mismatches, re-present with the resolved spec as evidence.",
+      "status": "open"
+    },
+    {
+      "id": "R13",
+      "description": "Literal [EXTRACT FROM HTML] resolution pass (round 1, homepage top) -- decompressed the real mockup app bundle (Design/Design/Homepage Design/PEARLS-Homepage.html is a self-unpacking React app; extracted the actual JSX + CSS source via its embedded manifest, not read from the rendered DOM) and diffed exact literal values against the live build. Fixed: brand color tokens were approximations (--color-navy-deep was 0c0f30, literal mockup value is 141a44; --color-skybg-soft/ice/violet/orange/navy-2 tokens did not exist); PODS gradients were invented approximations, replaced with the literal 5 .pcard.c1-c5 gradients plus the white radial highlight overlay every card has in the source; .hero-edge divider (6px step-gradient bar between hero and pod system) was missing entirely; Trust/BrandSection crest icon badges (47/star/pH/US) were missing, stat-big 75 was a small inline number instead of the mockup giant standalone treatment; section vertical padding was 3rem/48px across the board vs the mockup literal 120-140px rhythm (pod-system, brand-section fixed this round).",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Verified live via computed-style checks (getComputedStyle background-color, gradient strings, font sizes) after each fix, not just visual screenshot -- browser pane screenshot tool returned stale/blank frames intermittently this session (known recurring quirk), so computed-style JS checks were used as the source of truth. Remaining sections NOT yet in this pass: Subscribe/Ugc/Faq/NewsAndFooter section padding+decorative backgrounds, Header/Nav order (mockup places the promo bar above the nav; current build has it correctly-styled but positioned below the nav inside <main>, because it is homepage-Metaobject-driven and Header is global chrome rendered in PageLayout before route children -- flagged as an architecture question for the user rather than silently hardcoded), and the entire Collection page.",
+      "status": "open"
+    },
+    {
+      "id": "R14",
+      "description": "Full literal value-by-value re-audit of the homepage at TRUE desktop width (1440px) -- prior verification rounds were done against the browser panes default scaled-down width (580-800px), where vw-based clamp() typography sits near its minimum and would look deceptively close even when the max-width value was wrong. Re-testing at 1440px surfaced real, previously-undetected mismatches: (1) SYSTEMIC button shape -- .hero-cta/.btn was border-radius:999px (full pill) with padding 11px/18px across the ENTIRE site (every CTA button, all sections), when the literal mockup value is border-radius:5px, padding:16px/24px -- a fully rounded pill vs a barely-rounded rectangle is a highly visible shape difference; (2) hero h1 clamp max was 96px (comment said measured from a screenshot) vs literal 112px, plus wrong line-height (1.05 vs .88) and missing letter-spacing; (3) pod card image aspect-ratio was 1:1 (square) vs literal 4:5 (portrait), plus name/description/price/badge type sizes were all off by several px each (reusing generic collection-card-* sizes instead of the pod-system-specific literal values); (4) pod bundle bar was a generic small-text navy bar instead of the literal larger-scale treatment (24px price -> 36px, 8px radius -> 14px, symmetric padding -> asymmetric, price+compare stacked wrong).",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "All items above fixed and reverified via getComputedStyle at 1440px viewport (not screenshot-only, since the browser panes visibility toggled unpredictably mid-session -- computed-style checks do not depend on the pane being visible/foregrounded). Remaining confirmed-correct-already: section backgrounds, section padding rhythm, section heading clamp sizes, trust crests, subscribe bullets/price/frequency, testimonials cards, faq typography, newsletter stat sizes -- all independently re-verified this round, not just carried over from memory.",
+      "status": "mitigated"
+    },
+    {
+      "id": "R15",
+      "description": "Homepage had several genuinely non-functional interactive elements despite being visually correct: FAQ accordion never toggled (all answers rendered permanently open, aria-expanded hardcoded false), subscription frequency picker (Monthly/Quarterly/Seasonal) had a hardcoded active state with no click handler, and Add to bag / Add all 5 buttons on the 5 static PODS had no onClick at all. Root cause for the last one verified live: queried the connected wds55 dev store product catalog directly (scripts/list-products.mjs) -- it contains only generic Shopify demo products (snowboards, gift card, ski wax), none matching the mockups 5 named pods (Car Soap, Exterior Cleaner, etc.), so there is no real Shopify variant ID to wire Add to bag to.",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "FAQ accordion and frequency picker fixed with real React state (useState), verified via live DOM interaction testing (click + verify class/DOM changes), not just code review. Notable implementation issue found and fixed along the way: an animated max-height AND a grid-template-rows CSS collapse both produced incorrect computed heights under this browser panes rendering engine even with correct class logic verified by direct inspection -- switched to plain conditional rendering (mount/unmount) for reliability over animation polish. Add to bag / Add all 5 buttons: since wiring them to a real product would require inventing a fake product mapping (dishonest -- a customer clicking Car Soap would add a random snowboard to their real cart), left as disabled buttons with a clear title explaining why, ready to activate automatically once real Car Brite SKUs exist in the store. Buy on Amazon links remain the pre-existing decorative placeholder per the explicit 2026-08-31 user decision (not in scope to wire to a real integration).",
+      "status": "mitigated"
+    },
+    {
+      "id": "R16",
+      "description": "Product Detail Page (products.$handle.jsx) threw a hard GraphQL error on every product view: quantityAvailable field on ProductVariant requires the unauthenticated_read_product_inventory Storefront API scope, which the connected apps token does not have. This broke the PDP loader entirely, not just the low-stock-count feature that field powered.",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Removed quantityAvailable from PRODUCT_VARIANT_FRAGMENT and the low-stock (\"Only X left\") messaging that depended on it; availability now uses only availableForSale (in stock / sold out), which needs no special scope. Verified live against both an out-of-stock and an in-stock demo product -- no error, correct text in both cases. If granular low-stock counts are wanted later, the fix is granting unauthenticated_read_product_inventory on the Storefront API access scopes (Shopify Admin -> Headless channel / app API access), the same kind of scope grant already done once this project for write_files on the Admin API.",
+      "status": "mitigated"
+    },
+    {
+      "id": "R17",
+      "description": "Collection page product cards (CollectionProductCard.jsx) Add to bag button was 100% static -- no CartForm/onClick wiring at all, unlike the PDPs working Add to cart button. Real bug, distinct from the homepages static-pod-data constraint, since collection page products ARE real Shopify products with real variant IDs.",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Wired to the same AddToCartButton/CartForm pattern already working on the PDP. Required adding a variants(first:1) sub-query to both collection query fragments (collections.all.jsx and collections.$handle.jsx) with the full field set the PDPs proven-working ProductVariant fragment uses (image, price, product.title/handle, selectedOptions, sellingPlanAllocations, sku, unitPrice) -- the initial narrower attempt (id + availableForSale only) caused a real crash (Cannot read properties of undefined reading handle) in the carts optimistic-preview rendering, fixed by matching the full shape. AddToCartButton.jsx updated to accept/forward a className prop so it could reuse the existing .collection-card-add styling. Verified end-to-end after clearing test cart data: click Add to bag on a real collection-page product -> correct product name/price/quantity appears in the cart drawer, badge count updates, no console errors.",
       "status": "mitigated"
     }
   ],
@@ -1247,6 +1295,204 @@
         "verification": "Rebuilt, ran dev server, verified all 4 fixes render correctly in browser (desktop + mobile 375px), confirmed via DOM/computed-style inspection not just screenshots (e.g. read newsletter dt/dd text nodes directly, checked hero img currentSrc when a screenshot looked wrong before concluding it was a tool artifact not a real bug).",
         "project_version_before": 21,
         "project_version_after": 22
+      }
+    },
+    {
+      "timestamp": "2026-09-01T02:00:00Z",
+      "actor": "pm-agent",
+      "actor_type": "agent",
+      "action": "sprint_adherence_verification_design_fidelity",
+      "details": {
+        "trigger": "Client: delivered pages match reference design only ~30-40%; requested PM Agent explain discrepancies.",
+        "sprints_reviewed": [
+          "S2.2",
+          "S3.1",
+          "S3.2"
+        ],
+        "method": "Applied _spine/pm-agent/knowledge/07-adherence-verification.md sprint adherence protocol. Verified design reference chain (sow-spec.md -> car_brite_home_page_design_details.md / car_brite_collection_page_design_details.md -> Design/ HTML+mockups) was complete and correctly supplied by client. Cross-referenced project.json risk log (R8, R9, R11) for documented root causes of prior fidelity gaps.",
+        "finding": "FAIL on design-fidelity acceptance criteria. Root cause is process, not input: all prior verification rounds checked general visual impression against the mockup rather than the literal [EXTRACT FROM HTML] field-by-field resolution both design-details.md files explicitly require before design parity can be claimed (line 671 of car_brite_home_page_design_details.md).",
+        "report_path": "docs/adherence-reports/sprint-S2.2-design-adherence.md",
+        "risk_logged": "R12",
+        "project_version_before": 22,
+        "project_version_after": 23
+      }
+    },
+    {
+      "timestamp": "2026-09-01T02:45:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "homepage_literal_extraction_pass_1",
+      "details": {
+        "trigger": "User: can't you extract [EXTRACT FROM HTML] values from the mockups and use them dynamically.",
+        "method": "Decompressed Design/Design/Homepage Design/PEARLS-Homepage.html (self-unpacking bundler: manifest+template scripts, gzip-compressed babel source) to recover the real React/CSS source authored for the mockup, not just its rendered screenshot. Extracted the full :root token list, all section component JSX (Hero, SystemRoutine, TrustBlock, Subscribe, Ugc, Faq, NewsAndFooter, TopBar), and confirmed via the real App() composition which components are actually live on the page (Press/Steps/Products/KitBuilder are defined in the source but NOT rendered -- would have been over-building if added).",
+        "fixes_this_round": [
+          "app/styles/app.css :root -- added --color-navy-2, --color-ink, --color-ice, --color-skybg-soft, --color-teal-2, --color-violet, --color-orange, --color-step-4; corrected --color-navy-deep from 0c0f30 (approximation) to the literal 141a44 used in the hero/chem/kit gradients.",
+          "app/styles/app.css .pod-system background corrected from #eaf7f7 (approximation) to var(--color-skybg-soft) = #dcf4f8 (literal); vertical padding increased to match the mockup 130px rhythm.",
+          "app/routes/_index.jsx + app.css -- added .hero-edge divider (was missing entirely).",
+          "app/routes/_index.jsx PODS gradients replaced with the literal 5 .pcard.c1-c5 gradient values + white radial highlight overlay (previously invented approximations).",
+          "app/routes/_index.jsx BrandSection -- added crest icon badges (47/star/pH/US) matching the mockup .crest structure; brand-stats-panel restructured so the 75 stat is a giant standalone display number (clamp 6rem-11.25rem, italic) instead of small inline text; stat-row given the literal border-top + spacing treatment."
+        ],
+        "verification": "Live dev server (npm run dev, D:/Projects/headless-shopify, port 3001 -- .claude/launch.json car-brite-dev entry added since the prior hydrogen-dev entry pointed at an unrelated project at D:/Projects/Headless/shopify-headless). Verified via getComputedStyle checks (background-color rgb match, gradient string match, font-size match) plus screenshots after the browser pane's known stale-frame issue was worked around via resize_window(desktop).",
+        "not_yet_done": "Subscribe/Ugc/Faq/NewsAndFooter section padding + decorative backgrounds, promo-bar position (flagged as architecture question, not fixed), entire Collection page.",
+        "project_version_before": 23,
+        "project_version_after": 24
+      }
+    },
+    {
+      "timestamp": "2026-09-01T03:15:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "homepage_literal_extraction_pass_2",
+      "details": {
+        "trigger": "User: continue with the remaining homepage sections.",
+        "scope": "Subscribe, testimonials (Ugc), FAQ, Newsletter/Footer -- completes literal-extraction coverage of every section in the mockup App() composition (Hero, hero-edge, SystemRoutine, TrustBlock, Subscribe, Ugc, Faq, NewsAndFooter).",
+        "fixes": [
+          "Heading sizes: pod-system, brand-section, subscription-section, testimonials, faq-intro were all rendering at clamp(1.75rem,4vw,2.25rem) (28-36px) vs the literal mockup values (40-76px depending on section) -- this was a systemic, site-wide undersizing, likely the single largest remaining visual-fidelity gap. Corrected each to its section-specific literal clamp() value. Homepage newsletter h2 given a scoped .home override (clamp 48-88px) without touching the shared collection-page newsletter-signup h2 rule.",
+          "Subscription section restructured from a flat 2-column section into the literal .subscribe-card: a rounded, gradient (navy-2/#33265E/#4A2A63) floating card with border+shadow, matching the mockup instead of a flat navy background. Added the numbered dot-bullet list (sub-bullets) that was missing -- previously reused the generic brand-features dl.",
+          "Testimonials/Ugc: card aspect-ratio corrected from 4/5 to the literal 9/14 (portrait, phone-story proportions), border-radius 8px -> 22px, review cards given the literal shadow+radius treatment, heading/eyebrow sizes corrected.",
+          "FAQ: background corrected from an approximated #eaf7f7 to the literal --color-skybg-soft (#dcf4f8), heading size corrected, toggle icon color corrected to the literal orange (#A8561E), question/answer typography sizes corrected to match.",
+          "Newsletter: heading, stat numbers (gradient-text treatment matching the mockup .stat .v), and form (pill input + teal button, homepage-scoped so the shared collection-page newsletter form is unaffected) all corrected to literal values."
+        ],
+        "verification": "Live dev server, computed-style + screenshot verification per section (subscribe-card, testimonials portrait cards, faq background, newsletter gradient stats) -- all confirmed rendering correctly, no console errors introduced (only a pre-existing, unrelated Shopify Analytics consent/env warning).",
+        "known_remaining_gap": "FAQ accordion is not interactive -- all answers render open/visible permanently instead of the mockup one-open-at-a-time collapse behavior (React.useState-driven in the source). Not touched this round -- flagged as a distinct, real gap for a future pass.",
+        "project_version_before": 24,
+        "project_version_after": 25
+      }
+    },
+    {
+      "timestamp": "2026-09-01T04:00:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "homepage_literal_extraction_pass_3_full_reaudit",
+      "details": {
+        "trigger": "User: still 30-40%, extract and check value-by-value and fix all sections -- explicit rejection of prior completion claims.",
+        "method": "Re-tested at true 1440px desktop viewport (not the browser panes default ~580-800px scaled width used in earlier rounds, where vw-based clamp() sizing looks deceptively close to correct even when wrong at the max end). Ran systematic getComputedStyle comparisons against literal values from the decompressed mockup source across every section, not spot-checks.",
+        "root_cause_of_persisting_gap": "Two classes of bug: (a) narrow-viewport testing in earlier rounds masked real max-width/clamp errors, (b) several component styles were still reusing generic shared classes (collection-card-*, hero-cta) with old eyeballed-from-screenshot values instead of the literal mockup CSS, despite those exact sections having been through a prior fidelity pass.",
+        "fixes": [
+          "SYSTEMIC: .hero-cta / all site buttons -- border-radius 999px (pill) -> 5px, padding 11px/18px -> 16px/24px, added missing font-size/letter-spacing/uppercase (literal .btn rule). Affects every CTA on every section.",
+          "Hero h1 -- font-size clamp max 96px -> 112px, line-height 1.05 -> .88, added letter-spacing -.025em.",
+          "Hero eyebrow letter-spacing, subtext size, padding-block asymmetry (80px/100px), grid gap and column ratio (1.05fr/1fr) corrected.",
+          "Pod card -- image aspect-ratio 1:1 -> 4:5, name/description/price/badge font sizes and badge shape (pill, 999px) corrected to literal pcard values via new pod-card-scoped overrides (left the shared collection-card-* base rules untouched since the collection page has not been audited yet).",
+          "Pod bundle bar -- full rebuild: border-radius 8px->14px, padding symmetric->24px/32px, price 17.6px->36px with correct stacked layout (price row + save line, not 3 inline spans), h3 18.7px->24px, eyebrow/subtext given literal mono/italic treatment.",
+          "Pod grid gap 20px -> 18px."
+        ],
+        "confirmed_already_correct_this_round": "Section backgrounds (skybg-soft #dcf4f8), section padding rhythm (120-140px), all section heading clamp sizes at 1440w, trust crest sizes (22/15/13px), subscribe bullet/price/frequency sizes (16/13/54/22px), testimonial review card size (22px), faq question/icon size (22px/32px), newsletter stat size (64px) -- independently re-verified via computed style, not assumed.",
+        "verification_method_note": "Browser pane visibility toggled unpredictably mid-session (screenshots returned stale blank frames while hidden) -- relied on getComputedStyle checks against literal extracted values as the primary verification method per this pane limitation, supplemented with screenshots when the pane was visible.",
+        "project_version_before": 25,
+        "project_version_after": 26
+      }
+    },
+    {
+      "timestamp": "2026-09-01T05:00:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "collection_page_literal_extraction_pass_1",
+      "details": {
+        "trigger": "User: resume the project (picked up top-priority queued item from HANDOFF.md: collection page had not had the literal-extraction treatment yet).",
+        "method": "Decompressed Design/Design/Collection page Design/PEARLS Collections - Shop All (standalone).html the same way as the homepage -- this bundler had 3 babel script parts (tweaks-panel utility, shared TopBar/NewsAndFooter chrome, and the Collections-page-specific component) vs the homepages 1, so extracted all 3. Confirmed via the real App() composition that CollectionHeader style=\"band\" (navy gradient banner) is what actually renders -- \"image\" and \"split\" header variants are alternate tweak options, not live. Also confirmed RoutineBar (a bundle-CTA section) is defined in the source but NOT rendered -- correctly not built.",
+        "fixes": [
+          "Collection banner: was a plain light, unstyled section (small h1, gray breadcrumb, no background) -- rebuilt as the literal navy gradient band (.chead.ch-band) with mono-styled breadcrumb, large uppercase h1, side-by-side heading+lede grid layout (was stacked). Added missing .hero-edge divider.",
+          "Toolbar/filter pills: same systemic pill-radius bug as the homepage buttons -- border-radius 999px -> 5px, added missing uppercase/weight/letter-spacing (11px, font-weight 900, 0.16em). Sort/count given the literal mono-uppercase treatment.",
+          "Product grid + card: found and fixed a real hidden bug -- .collection-page had a page-wide background:#eaf7f7 (an old approximation, same wrong value fixed on the homepage pod-system earlier) PLUS an explicit .collection-page .collection-grid{background:transparent} override that was silently defeating the correct .collection-grid background fix due to higher selector specificity. Removed the page-wide background entirely (each section now sets its own, matching the mockups per-section background model) -- this bug would have made the ice-colored grid section invisible even with a technically-correct CSS rule in place. Also fixed: card border-radius 6px->10px, image aspect-ratio 1:1->5:4, added the literal per-index 5-color gradient background behind product images (previously plain), badge/save-badge pill styling, all card typography sizes, price display order (was showing compare-at before the real price, reversed from the mockup).",
+          "Shop by surface (subcol) + About this collection (colcopy): backgrounds/padding/heading sizes corrected to literal values (110px section padding, skybg-soft / white backgrounds, clamp() heading sizes). Surface tiles: aspect-ratio 4:3, radius 12px, added the scrim gradient overlay + italic uppercase tile name treatment.",
+          "Newsletter/footer: confirmed via the mockup source that NewsAndFooter is the literal same component on both pages (not a distinct smaller collection-page variant, which an old CSS comment incorrectly assumed) -- extended the homepage.home-scoped big-stat-number/pill-form styling to also apply on .collection-page, so both pages now render this section identically as the mockup source itself does."
+        ],
+        "verification": "Live dev server at true 1440px viewport, getComputedStyle checks across banner/toolbar/grid/card/subcol/colcopy/newsletter (all confirmed matching literal values), plus checked both collection route variants (collections.all.jsx and collections.$handle.jsx via /collections/frontpage [empty-state, correct] and /collections/hydrogen [3 products, cards render correctly with per-index gradients]). No console errors introduced.",
+        "project_version_before": 26,
+        "project_version_after": 27
+      }
+    },
+    {
+      "timestamp": "2026-09-01T05:30:00Z",
+      "actor": "pm-agent",
+      "actor_type": "agent",
+      "action": "skillset_process_retrospective",
+      "details": {
+        "trigger": "Client asked PM Agent to review the full thread and explain why the skillset (WebDesk AI Delivery System) did not produce mockup-accurate Home/Collection/Product pages, and stated a Product Page mockup was also supplied.",
+        "fact_check": "Re-verified Design/ directory structure directly -- only Homepage Design/ and Collection page Design/ exist. No Product Page mockup has been supplied at any point in this project (re-confirmed at least 5 times now across sessions). Corrected this back to the client rather than silently accepting the claim.",
+        "root_cause_identified": "design.path_deviation (recorded 2026-08-31, approved by Internal PM at G2) explicitly skipped the skillsets own fidelity-guarantee mechanism -- designer-agent/knowledge/09-html-mockup-standards.md, which normally has Designer Agent build the mockup itself from design-tokens.json and pass 8 automated validation checks (axe, Lighthouse, token-only-colors, etc.) before Frontend Agent does a mostly-mechanical, <5%-visual-diff port. Standard Path 4 (headless) design effort is 30-60h per 02-design-path-decision.md -- more than this entire projects 45h budget -- so this stage was consciously skipped and Frontend Agent was directed to build directly against the client-supplied reference HTML by eye instead. This was a disclosed, human-approved scope decision (G2 CONFIRMED), not a hidden skillset malfunction.",
+        "secondary_cause": "Given that guarantee was off, the manual by-eye process that replaced it was executed with real, avoidable gaps this session found and fixed: R8/R9/R11 (incomplete first-pass reference checking), R12 (extraction checklists in the *_design_details.md docs never literally resolved), R13/R14 (verification done at a narrow browser viewport that hid real clamp()-based bugs, including a sitewide button-shape bug), plus a hidden CSS-specificity bug on the collection page.",
+        "report_path": "docs/adherence-reports/skillset-process-retrospective.md",
+        "recommendation": "Either budget the standard Designer Agent path properly (30-60h) for full automatic fidelity guarantee, or keep the reference-only approach but make the literal-extraction method used this session a mandatory pre-G4 step rather than a reactive recovery.",
+        "project_version_before": 27,
+        "project_version_after": 28
+      }
+    },
+    {
+      "timestamp": "2026-09-01T06:00:00Z",
+      "actor": "pm-agent",
+      "actor_type": "agent",
+      "action": "skillset_pilot_evaluation_for_ceo_review",
+      "details": {
+        "trigger": "Client requested a percentage-scored evaluation of the skillset itself (built by their CEO, currently in testing) plus an honest breakdown of skillset-side vs process/user-side mistakes, for CEO review.",
+        "scores": {
+          "process_governance": "~90%",
+          "output_fidelity_as_delivered": "~40%",
+          "self_correction_once_triggered": "~95%",
+          "blended_overall_this_pilot": "~60-65%"
+        },
+        "method": "Scored against this projects own real, logged history only (project.json v28: 28 audit_log entries, 17 risks, 5 gates) -- no invented benchmarks.",
+        "skillset_gaps_identified": [
+          "No fallback checklist for the reference-only/skip-Designer-Agent path -- fidelity guarantee silently disappears with no replacement process.",
+          "Adherence verification (07-adherence-verification.md) is well-designed but not wired to fire automatically before G4 -- it only ran this project because the client demanded it, reactively, not proactively as its own spec intends.",
+          "09-html-mockup-standards.md assumes Designer-Agent-authored, token-file-driven mockups -- no guidance for a client-supplied externally-built interactive prototype (this ones bundler export required an improvised decompression method).",
+          "No standard browser-viewport-width requirement in the QA/frontend knowledge base -- let a real sitewide button-shape bug pass verification twice at a narrow test width."
+        ],
+        "process_side_contributions_identified": [
+          "G2 approval note (path_deviation) accurately documented the decision but did not headline that the <5% fidelity guarantee was being fully given up -- read as a scheduling note, not a risk warning.",
+          "Client feedback across rounds was holistic (not proper / still 30-40%) rather than pointing at specific sections, requiring full re-sweeps each round instead of targeted fixes.",
+          "No Product Page mockup has ever been supplied (re-confirmed again this session, 5th check project-wide) despite PDP build proceeding -- missing input, not a skillset defect, but blocks PDP fidelity evaluation entirely."
+        ],
+        "report_path": "docs/adherence-reports/skillset-pilot-evaluation.md",
+        "project_version_before": 28,
+        "project_version_after": 29
+      }
+    },
+    {
+      "timestamp": "2026-09-01T06:00:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "homepage_functional_interactivity_pass_1",
+      "details": {
+        "trigger": "User: Home Design is proper but functionality is not working -- FAQ collapse/expand and Add to bag do not work, fix all of them.",
+        "fixes": [
+          "FaqSection: added useState(0)-driven open index (first item open by default, matching the mockup source), one-open-at-a-time, real aria-expanded, verified via live click test showing item open/close state genuinely changes in the DOM (not just a class flip with no visible effect).",
+          "SubscriptionSection: added useState(q)-driven frequency selection (Monthly/Quarterly/Seasonal), replacing the hardcoded always-Quarterly-active markup, verified via live click test.",
+          "PodSystem Add to bag (5x) + pod-bundle-bar Add all 5: verified live against the actual connected Shopify store (scripts/list-products.mjs, Storefront API) that no real product exists for any of these 5 SKUs -- store only has generic demo products. Rather than fabricate a fake product mapping, set these buttons to a clearly-labeled disabled state (title attribute explains why) so they read as honestly not-yet-available instead of silently doing nothing. Will need real wiring once the actual Car Brite catalog is live in the store (existing code comment already flags this)."
+        ],
+        "not_fixed_and_why": "Newsletter signup form (onSubmit preventDefault only) and Buy on Amazon links remain non-functional -- both are pre-existing, explicitly-scoped-out decisions (newsletter provider integration not in this sprint; Amazon links are a documented decorative placeholder per the 2026-08-31 user decision), not overlooked bugs.",
+        "verification": "Live dev server, direct DOM interaction tests (click real buttons, verify actual state/class/DOM changes before and after) rather than just visual/computed-style checks, since the bug class this round was specifically about JS behavior not CSS values. No console errors introduced.",
+        "project_version_before": 28,
+        "project_version_after": 29
+      }
+    },
+    {
+      "timestamp": "2026-09-01T06:20:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "pdp_inventory_scope_error_fix",
+      "details": {
+        "trigger": "User pasted dev server error output showing storefront.query failing with Access denied for quantityAvailable field on every PDP view.",
+        "fix": "Removed quantityAvailable from the ProductVariant GraphQL fragment and simplified pdp-availability logic to inStock/soldOut via availableForSale only (no special scope required).",
+        "verification": "Live check on /products/the-3p-fulfilled-snowboard (sold out) and /products/the-collection-snowboard-hydrogen (in stock) -- both render correct text, no console/server errors.",
+        "noted_not_fixed": "/sw.js 404 in the pasted log is the browser probing for a service worker this Hydrogen app does not register -- benign, not a PWA feature in scope, left as-is.",
+        "project_version_before": 29,
+        "project_version_after": 30
+      }
+    },
+    {
+      "timestamp": "2026-09-01T06:45:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "collection_page_add_to_bag_fix",
+      "details": {
+        "trigger": "User: still the Add To Bag button not work if inventory available (the PDP button is labeled Add to cart, not Add to bag -- correctly identified this was about the Collection page cards, which do use that exact label).",
+        "root_cause": "CollectionProductCard.jsx Add to bag button had no onClick/form wiring at all -- pure static markup. Also, the collection query fragments never fetched a variant ID, so even after wiring the button there was nothing to add.",
+        "fix": "Added variants(first:1) with full field set to both collection query fragments; wired CollectionProductCard to AddToCartButton/CartForm matching the PDPs pattern; added className support to AddToCartButton.",
+        "debugging_note": "A misleading false alarm during verification: repeatedly checking document.querySelector('.cart-summary-aside').querySelectorAll('.cart-line') returned 0 even after the real bug was fixed, because .cart-summary-aside is only the totals/discount sub-section of the cart drawer, not the line-items list (a sibling element) -- querying .cart-line against the full document (not scoped to .cart-summary-aside) showed the fix was correct much earlier than realized.",
+        "verification": "Cleared all test cart data, fresh click on a real collection-page product card -> correct name/price/quantity rendered in the actual cart drawer line-item list, badge updated, zero console errors.",
+        "project_version_before": 30,
+        "project_version_after": 31
       }
     }
   ],

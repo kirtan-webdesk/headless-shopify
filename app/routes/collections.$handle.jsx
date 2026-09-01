@@ -105,19 +105,22 @@ export default function Collection() {
 
   return (
     <div className="collection-page">
-      <div className="collection-banner">
+      <header className="collection-banner">
         <nav aria-label="Breadcrumb" className="collection-breadcrumb">
           <Link to="/">Home</Link>
-          <span aria-hidden="true"> / </span>
-          <Link to="/collections">Shop</Link>
-          <span aria-hidden="true"> / </span>
-          <span aria-current="page">{collection.title}</span>
+          <span aria-hidden="true">/</span>
+          <Link to="/collections/all">Shop</Link>
+          <span aria-hidden="true">/</span>
+          <em aria-current="page">{collection.title}</em>
         </nav>
-        <h1>{collection.title}</h1>
-        {collection.description && (
-          <p className="collection-description">{collection.description}</p>
-        )}
-      </div>
+        <div className="collection-banner-row">
+          <h1>{collection.title}</h1>
+          {collection.description && (
+            <p className="collection-description">{collection.description}</p>
+          )}
+        </div>
+      </header>
+      <div className="hero-edge" />
 
       <div className="collection-controls">
         <div className="collection-filter-tabs" role="tablist" aria-label="Filter by category">
@@ -182,6 +185,7 @@ export default function Collection() {
             <CollectionProductCard
               key={product.id}
               product={product}
+              index={index}
               loading={index < 8 ? 'eager' : undefined}
             />
           )}
@@ -340,6 +344,46 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
     compareAtPriceRange {
       minVariantPrice {
         ...MoneyProductItem
+      }
+    }
+    variants(first: 1) {
+      nodes {
+        id
+        availableForSale
+        title
+        sku
+        image {
+          __typename
+          id
+          url
+          altText
+          width
+          height
+        }
+        price {
+          amount
+          currencyCode
+        }
+        unitPrice {
+          amount
+          currencyCode
+        }
+        product {
+          title
+          handle
+        }
+        selectedOptions {
+          name
+          value
+        }
+        sellingPlanAllocations(first: 10) {
+          nodes {
+            sellingPlan {
+              name
+              description
+            }
+          }
+        }
       }
     }
   }

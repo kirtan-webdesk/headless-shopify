@@ -99,10 +99,7 @@ export default function Product() {
 
   const {title, descriptionHtml} = product;
 
-  const quantityAvailable = selectedVariant?.quantityAvailable;
   const inStock = selectedVariant?.availableForSale;
-  const lowStock =
-    inStock && typeof quantityAvailable === 'number' && quantityAvailable > 0 && quantityAvailable <= 5;
 
   const sellingPlans = selectedVariant?.sellingPlanAllocations?.nodes ?? [];
 
@@ -122,11 +119,7 @@ export default function Product() {
         />
 
         <p className="pdp-availability" role="status">
-          {inStock
-            ? lowStock
-              ? `Only ${quantityAvailable} left`
-              : 'In stock'
-            : 'Sold out'}
+          {inStock ? 'In stock' : 'Sold out'}
         </p>
 
         <ProductForm
@@ -211,7 +204,6 @@ function RelatedProducts({productsPromise, currentHandle}) {
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
     availableForSale
-    quantityAvailable
     compareAtPrice {
       amount
       currencyCode

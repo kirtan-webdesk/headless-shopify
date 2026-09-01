@@ -96,21 +96,24 @@ export default function Collection() {
 
   return (
     <div className="collection-page">
-      <div className="collection-banner">
+      <header className="collection-banner">
         <nav aria-label="Breadcrumb" className="collection-breadcrumb">
           <Link to="/">Home</Link>
-          <span aria-hidden="true"> / </span>
+          <span aria-hidden="true">/</span>
           <Link to="/collections/all">Shop</Link>
-          <span aria-hidden="true"> / </span>
-          <span aria-current="page">Shop All</span>
+          <span aria-hidden="true">/</span>
+          <em aria-current="page">Shop All</em>
         </nav>
-        <h1>Shop all</h1>
-        <p className="collection-description">
-          Every pod, kit, and piece of gear in the PEARLS system — five
-          single-dose concentrates built on 75 years of Car Brite chemistry,
-          plus the bundles that put them together.
-        </p>
-      </div>
+        <div className="collection-banner-row">
+          <h1>Shop all</h1>
+          <p className="collection-description">
+            Every pod, kit, and piece of gear in the PEARLS system — five
+            single-dose concentrates built on 75 years of Car Brite lab
+            chemistry, plus the bundles that put them together.
+          </p>
+        </div>
+      </header>
+      <div className="hero-edge" />
 
       <div className="collection-controls">
         <div
@@ -180,6 +183,7 @@ export default function Collection() {
             <CollectionProductCard
               key={product.id}
               product={product}
+              index={index}
               loading={index < 8 ? 'eager' : undefined}
             />
           )}
@@ -327,6 +331,46 @@ const COLLECTION_ITEM_FRAGMENT = `#graphql
     compareAtPriceRange {
       minVariantPrice {
         ...MoneyCollectionItem
+      }
+    }
+    variants(first: 1) {
+      nodes {
+        id
+        availableForSale
+        title
+        sku
+        image {
+          __typename
+          id
+          url
+          altText
+          width
+          height
+        }
+        price {
+          amount
+          currencyCode
+        }
+        unitPrice {
+          amount
+          currencyCode
+        }
+        product {
+          title
+          handle
+        }
+        selectedOptions {
+          name
+          value
+        }
+        sellingPlanAllocations(first: 10) {
+          nodes {
+            sellingPlan {
+              name
+              description
+            }
+          }
+        }
       }
     }
   }

@@ -1,5 +1,5 @@
 import {Await, useLoaderData, Link} from 'react-router';
-import {Suspense} from 'react';
+import {Suspense, useState} from 'react';
 import {Image} from '@shopify/hydrogen';
 import {MockShopNotice} from '~/components/MockShopNotice';
 
@@ -64,6 +64,7 @@ export default function Homepage() {
       {data.isShopLinked ? null : <MockShopNotice />}
       <AnnouncementBar homepage={data.homepage} />
       <Hero homepage={data.homepage} />
+      <div className="hero-edge" />
       <PodSystem />
       <BrandSection />
       <SubscriptionSection />
@@ -205,9 +206,10 @@ function Hero({homepage}) {
 // the real Car Brite catalog is live with matching handles, this should
 // become a real Storefront API product query (see collections.all.jsx for
 // the pattern) rather than staying hardcoded. Flagged in HANDOFF.md.
-// Each pod has its own gradient in the reference (blue/purple/orange/teal/
-// amber, matching the product's own bottle color) -- NOT a single repeated
-// brand gradient. Sampled from the mockup image per pod.
+// Gradients are the literal .pcard.c1-c5 values extracted from the
+// decompressed mockup source (app-source.jsx), not sampled/approximated by
+// eye -- each is a white radial highlight over the product's own linear
+// gradient, per the mockup's .pcard .img background.
 const PODS = [
   {
     step: 'Step 01',
@@ -216,7 +218,8 @@ const PODS = [
     description: 'Foaming bucket wash. Lifts grime without stripping wax.',
     price: '$24',
     image: '/images/pod-1.png',
-    gradient: 'linear-gradient(160deg, #4fa8dc, #1e3a6e)',
+    gradient:
+      'radial-gradient(60% 60% at 50% 45%, rgba(255,255,255,.4), transparent 70%), linear-gradient(160deg, #73CDDA, #0a4a6e)',
   },
   {
     step: 'Step 02',
@@ -225,7 +228,8 @@ const PODS = [
     description: 'Trim, paint, and bumpers. Cuts road film without the residue.',
     price: '$28',
     image: '/images/pod-2.png',
-    gradient: 'linear-gradient(160deg, #a755c2, #4a1d6e)',
+    gradient:
+      'radial-gradient(60% 60% at 50% 45%, rgba(255,255,255,.4), transparent 70%), linear-gradient(160deg, #8E4D9E, #4a166e)',
   },
   {
     step: 'Step 03',
@@ -234,7 +238,8 @@ const PODS = [
     description: 'High-shine tire dressing. Sling-free and ceramic-safe.',
     price: '$26',
     image: '/images/pod-3.png',
-    gradient: 'linear-gradient(160deg, #f0793c, #9a3412)',
+    gradient:
+      'radial-gradient(60% 60% at 50% 45%, rgba(255,255,255,.4), transparent 70%), linear-gradient(160deg, #644FA0, #33265E)',
   },
   {
     step: 'Step 04',
@@ -243,7 +248,8 @@ const PODS = [
     description: 'Streak-free glass + crystal. Ammonia-free formula.',
     price: '$22',
     image: '/images/pod-4.png',
-    gradient: 'linear-gradient(160deg, #3fc9c9, #0e6e6e)',
+    gradient:
+      'radial-gradient(60% 60% at 50% 45%, rgba(255,255,255,.4), transparent 70%), linear-gradient(160deg, #2E9BB0, #074c75)',
   },
   {
     step: 'Step 05',
@@ -252,7 +258,8 @@ const PODS = [
     description: 'Dash, vinyl, and leather. Lifts grime to a matte finish.',
     price: '$26',
     image: '/images/pod-5.png',
-    gradient: 'linear-gradient(160deg, #c9922f, #7a4a12)',
+    gradient:
+      'radial-gradient(60% 60% at 50% 45%, rgba(255,255,255,.4), transparent 70%), linear-gradient(160deg, #A8561E, #5A2E10)',
   },
 ];
 
@@ -322,7 +329,12 @@ function PodSystem() {
             <p className="collection-card-description">{pod.description}</p>
             <div className="collection-card-price">{pod.price}</div>
             <div className="collection-card-actions">
-              <button type="button" className="collection-card-add">
+              <button
+                type="button"
+                className="collection-card-add"
+                disabled
+                title="This pod isn't in the live Shopify catalog yet — Add to bag activates automatically once the real product is added."
+              >
                 Add to bag
               </button>
               <a className="collection-card-amazon" href="#">
@@ -340,12 +352,19 @@ function PodSystem() {
           Ships with the reusable rack · free over $60
         </p>
         <div className="pod-bundle-price">
-          <span>$107</span>
-          <span className="collection-card-price-compare">$126</span>
+          <div className="pod-bundle-price-row">
+            <span>$107</span>
+            <span className="collection-card-price-compare">$126</span>
+          </div>
           <span className="pod-bundle-save">Save 15% vs. à la carte</span>
         </div>
         <div className="pod-bundle-actions">
-          <button type="button" className="hero-cta hero-cta-primary">
+          <button
+            type="button"
+            className="hero-cta hero-cta-primary"
+            disabled
+            title="The 5 pods aren't in the live Shopify catalog yet — this activates automatically once the real products are added."
+          >
             Add all 5
           </button>
           <a href="#">Buy the full routine on Amazon</a>
@@ -356,22 +375,26 @@ function PodSystem() {
 }
 
 function BrandSection() {
-  const features = [
+  const crests = [
     {
-      name: 'Founded 1947',
-      copy: 'Indianapolis lab. Three generations of detailing chemists.',
+      ico: '47',
+      label: 'Founded 1947',
+      sub: 'Indianapolis lab. Three generations of detailing chemists.',
     },
     {
-      name: 'Pro-detailer trusted',
-      copy: 'Same chemistry shipped to dealerships, body shops, and marinas.',
+      ico: '★',
+      label: 'Pro-detailer trusted',
+      sub: 'Same chemistry shipped to dealerships, body shops, and marinas.',
     },
     {
-      name: 'Lab-tested',
-      copy: 'Every pod batch tested for pH, viscosity, and surfactant load.',
+      ico: 'pH',
+      label: 'Lab-tested',
+      sub: 'Every pod batch tested for pH, viscosity, and surfactant load.',
     },
     {
-      name: 'Made in USA',
-      copy: 'Formulated and bottled in Indiana — never re-labeled.',
+      ico: 'US',
+      label: 'Made in USA',
+      sub: 'Formulated and bottled in Indiana — never re-labeled.',
     },
   ];
   return (
@@ -386,22 +409,27 @@ function BrandSection() {
           since 1947 — the lab dealerships, body shops, and marinas have
           trusted for three generations. We just packed it into a pod.
         </p>
-        <dl className="brand-features">
-          {features.map((f) => (
-            <div key={f.name}>
-              <dt>{f.name}</dt>
-              <dd>{f.copy}</dd>
+        <div className="crests">
+          {crests.map((c) => (
+            <div className="crest" key={c.label}>
+              <div className="ico">{c.ico}</div>
+              <div>
+                <div className="label">{c.label}</div>
+                <div className="sub">{c.sub}</div>
+              </div>
             </div>
           ))}
-        </dl>
+        </div>
       </div>
       <div className="brand-stats-panel">
         <p className="section-eyebrow">By the numbers</p>
-        <h3>
-          <span className="brand-stats-number">75</span> years of professional
+        <div className="brand-stats-number">75</div>
+        <p className="brand-stats-caption">
+          Years of professional
+          <br />
           detailing chemistry
-        </h3>
-        <p>
+        </p>
+        <p className="brand-stats-sub">
           Three generations of chemists, one obsessive standard — now
           portioned into a single-dose pod.
         </p>
@@ -424,68 +452,88 @@ function BrandSection() {
   );
 }
 
+const FREQUENCIES = [
+  {id: 'm', value: '4w', label: 'Monthly'},
+  {id: 'q', value: '12w', label: 'Quarterly'},
+  {id: 's', value: '24w', label: 'Seasonal'},
+];
+
 function SubscriptionSection() {
-  const features = [
+  const bullets = [
     {
+      n: 1,
       name: 'Choose your cadence',
       copy: 'Monthly, quarterly, or seasonal — change anytime in two taps.',
     },
     {
+      n: 2,
       name: '15% off every refill',
       copy: 'Plus first dibs on limited-edition scents and new pods.',
     },
     {
+      n: 3,
       name: 'Cancel in one tap',
       copy: 'No phone calls. No win-back guilt. Promise.',
     },
   ];
+  const [frequency, setFrequency] = useState('q');
   return (
     <section className="subscription-section" aria-labelledby="subscription-section-heading">
-      <div className="subscription-copy">
-        <p className="section-eyebrow">Refill, don&rsquo;t replace</p>
-        <h2 id="subscription-section-heading">
-          Subscribe <em>to the shine.</em>
-        </h2>
-        <p>
-          Your bottle is forever. Pods arrive every month, season, or
-          whenever you say. Pause, skip, or swap pods any time.
-        </p>
-        <dl className="brand-features">
-          {features.map((f) => (
-            <div key={f.name}>
-              <dt>{f.name}</dt>
-              <dd>{f.copy}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-      <div className="subscription-panel">
-        <p className="section-eyebrow">Delivery frequency</p>
-        <div className="subscription-frequency" role="radiogroup" aria-label="Delivery frequency">
-          <button type="button" className="subscription-frequency-option">
-            Monthly<span>4w</span>
-          </button>
-          <button
-            type="button"
-            className="subscription-frequency-option subscription-frequency-active"
-          >
-            Quarterly<span>12w</span>
-          </button>
-          <button type="button" className="subscription-frequency-option">
-            Seasonal<span>24w</span>
-          </button>
+      <div className="subscribe-card">
+        <div className="subscription-copy">
+          <p className="section-eyebrow">Refill, don&rsquo;t replace</p>
+          <h2 id="subscription-section-heading">
+            Subscribe <em>to the shine.</em>
+          </h2>
+          <p>
+            Your bottle is forever. Pods arrive every month, season, or
+            whenever you say. Pause, skip, or swap pods any time.
+          </p>
+          <ul className="sub-bullets">
+            {bullets.map((b) => (
+              <li key={b.name}>
+                <span className="sub-bullet-dot">{b.n}</span>
+                <span>
+                  <strong>{b.name}</strong>
+                  <span>{b.copy}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="subscription-price">
-          <span>$107</span>
-          <span className="collection-card-price-compare">$126</span>
-          <span className="pod-bundle-save">Save 15%</span>
+        <div className="subscription-panel">
+          <p className="section-eyebrow">Delivery frequency</p>
+          <div className="subscription-frequency" role="radiogroup" aria-label="Delivery frequency">
+            {FREQUENCIES.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                role="radio"
+                aria-checked={frequency === f.id}
+                className={
+                  frequency === f.id
+                    ? 'subscription-frequency-option subscription-frequency-active'
+                    : 'subscription-frequency-option'
+                }
+                onClick={() => setFrequency(f.id)}
+              >
+                <span className="subscription-frequency-value">{f.value}</span>
+                <span>{f.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="subscription-price">
+            <span>$107</span>
+            <span className="collection-card-price-compare">$126</span>
+            <span className="pod-bundle-save">Save 15%</span>
+          </div>
+          <button type="button" className="hero-cta hero-cta-primary subscription-cta">
+            Start my subscription
+          </button>
+          <p className="subscription-fineprint">
+            First box ships in 3 business days · cancel anytime
+          </p>
         </div>
-        <button type="button" className="hero-cta hero-cta-primary subscription-cta">
-          Start my subscription
-        </button>
-        <p className="subscription-fineprint">
-          First box ships in 3 business days · cancel anytime
-        </p>
       </div>
     </section>
   );
@@ -583,6 +631,10 @@ const FAQS = [
 ];
 
 function FaqSection() {
+  // One-open-at-a-time accordion, first item open by default -- matches the
+  // mockup's React.useState(0) behavior (Faq() in the decompressed source).
+  const [openIndex, setOpenIndex] = useState(0);
+
   return (
     <section className="faq-section" aria-labelledby="faq-heading">
       <div className="faq-intro">
@@ -597,23 +649,27 @@ function FaqSection() {
         </button>
       </div>
       <dl className="faq-list">
-        {FAQS.map((item) => (
-          <div className="faq-item" key={item.q}>
-            <dt>
-              <button
-                type="button"
-                className="faq-question"
-                aria-expanded="false"
-              >
-                {item.q}
-                <span aria-hidden="true" className="faq-icon">
-                  +
-                </span>
-              </button>
-            </dt>
-            <dd>{item.a}</dd>
-          </div>
-        ))}
+        {FAQS.map((item, index) => {
+          const isOpen = openIndex === index;
+          return (
+            <div className={`faq-item${isOpen ? ' faq-item-open' : ''}`} key={item.q}>
+              <dt>
+                <button
+                  type="button"
+                  className="faq-question"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenIndex(isOpen ? -1 : index)}
+                >
+                  {item.q}
+                  <span aria-hidden="true" className="faq-icon">
+                    +
+                  </span>
+                </button>
+              </dt>
+              {isOpen && <dd>{item.a}</dd>}
+            </div>
+          );
+        })}
       </dl>
     </section>
   );
