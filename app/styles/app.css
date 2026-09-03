@@ -1361,6 +1361,14 @@ button.hero-cta:disabled:hover,
   border: 1.5px solid rgba(21, 25, 73, 0.16);
   border-radius: 5px;
   padding: 0.875rem;
+  box-sizing: border-box;
+}
+
+.collection-card-amazon span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .collection-card-amazon:hover {
@@ -2704,11 +2712,6 @@ button.hero-cta-secondary {
   font-size: 2rem;
   line-height: 0.7;
   color: var(--color-orange);
-  transition: transform 0.2s ease;
-}
-
-.faq-item-open .faq-icon {
-  transform: rotate(45deg);
 }
 
 .faq-item dd {
@@ -2816,4 +2819,156 @@ button.hero-cta-secondary {
   margin: 0;
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* Site content pages (About, How it Works, Chemistry, Car Brite, Careers,
+   Press, Contact) -- Metaobject-driven, styled consistently with the
+   homepage/PDP design system (no dedicated mockup exists for these pages). */
+.site-page {
+  background: var(--color-light);
+}
+
+.site-page-hero {
+  background: var(--color-navy);
+  color: var(--color-light);
+}
+
+.site-page-hero-inner {
+  padding-block: 3.5rem;
+  padding-inline: 1.5rem;
+  max-width: 48rem;
+  @media (min-width: 45em) {
+    padding-block: 5.5rem;
+    padding-inline: 4rem;
+  }
+}
+
+.site-page-hero-inner .section-eyebrow {
+  color: var(--color-teal);
+}
+
+.site-page-hero-inner h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2.25rem, 4.6vw, 3.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.25rem;
+}
+
+.site-page-hero-inner h1 em {
+  font-style: italic;
+  color: var(--color-teal);
+}
+
+.site-page-subtext {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0;
+}
+
+.site-page-body {
+  padding-block: 2.5rem;
+  padding-inline: 1.5rem;
+  @media (min-width: 45em) {
+    padding-inline: 4rem;
+    padding-block: 3.5rem;
+  }
+}
+
+.site-page-body ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 42rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.site-page-body li {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: rgba(21, 25, 73, 0.75);
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(21, 25, 73, 0.1);
+}
+
+.site-page-body li:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.site-page-cta {
+  padding-inline: 1.5rem;
+  padding-bottom: 3.5rem;
+  @media (min-width: 45em) {
+    padding-inline: 4rem;
+    padding-bottom: 5rem;
+  }
+}
+
+.site-page-cta a {
+  text-decoration: none;
+}
+
+.site-page-contact-form {
+  padding-inline: 1.5rem;
+  padding-bottom: 4rem;
+  @media (min-width: 45em) {
+    padding-inline: 4rem;
+    padding-bottom: 6rem;
+  }
+}
+
+.site-page-contact-form form {
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.contact-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.contact-form-row label {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-navy);
+}
+
+.contact-form-row input,
+.contact-form-row textarea {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid rgba(21, 25, 73, 0.16);
+  border-radius: 5px;
+  color: var(--color-navy);
+  resize: vertical;
+}
+
+.contact-form-row input:focus,
+.contact-form-row textarea:focus {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 1px;
+}
+
+.site-page-contact-form button {
+  align-self: flex-start;
+  border: none;
+  cursor: pointer;
+}
+
+.contact-form-note {
+  font-size: 0.8125rem;
+  color: rgba(21, 25, 73, 0.55);
+  margin: 0;
 }

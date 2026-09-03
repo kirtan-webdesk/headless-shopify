@@ -338,7 +338,7 @@ function PodSystem() {
                 Add to bag
               </button>
               <a className="collection-card-amazon" href="#">
-                Buy {pod.name} on Amazon
+                <span>Buy {pod.name} on Amazon</span>
               </a>
             </div>
           </article>
@@ -527,7 +527,12 @@ function SubscriptionSection() {
             <span className="collection-card-price-compare">$126</span>
             <span className="pod-bundle-save">Save 15%</span>
           </div>
-          <button type="button" className="hero-cta hero-cta-primary subscription-cta">
+          <button
+            type="button"
+            className="hero-cta hero-cta-primary subscription-cta"
+            disabled
+            title="Subscriptions aren't live yet — this activates once the real PEARLS bundle exists as a product and Recharge selling plans are installed (S2.4, still pending)."
+          >
             Start my subscription
           </button>
           <p className="subscription-fineprint">
@@ -632,8 +637,10 @@ const FAQS = [
 
 function FaqSection() {
   // One-open-at-a-time accordion, first item open by default -- matches the
-  // mockup's React.useState(0) behavior (Faq() in the decompressed source).
-  const [openIndex, setOpenIndex] = useState(0);
+  // All answers collapsed by default per explicit user direction --
+  // deviates from the mockup's React.useState(0) (first item open), which
+  // is what Faq() in the decompressed source uses.
+  const [openIndex, setOpenIndex] = useState(-1);
 
   return (
     <section className="faq-section" aria-labelledby="faq-heading">
@@ -662,7 +669,7 @@ function FaqSection() {
                 >
                   {item.q}
                   <span aria-hidden="true" className="faq-icon">
-                    +
+                    {isOpen ? '−' : '+'}
                   </span>
                 </button>
               </dt>

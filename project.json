@@ -28,8 +28,8 @@
       "develop_branch": "develop"
     },
     "created_at": "2026-08-31T11:24:51Z",
-    "updated_at": "2026-09-01T06:45:00Z",
-    "version": 31,
+    "updated_at": "2026-09-01T22:00:00Z",
+    "version": 38,
     "_headless_arm_notes": {
       "note": "project-json.schema.json's project_type enum has no 'new-build' value and platform enum has no 'headless' value, so this project is recorded as platform=shopify / project_type=new-development for schema compliance. The actual engagement, per headless/SKILL.md and sow-spec.md, is: headless_engagement_type=new-build (D-HL-TYPES-01 type 1), architecture=A (Hydrogen+Oxygen, D-HL-STACK-01).",
       "headless_engagement_type": "new-build",
@@ -1493,6 +1493,106 @@
         "verification": "Cleared all test cart data, fresh click on a real collection-page product card -> correct name/price/quantity rendered in the actual cart drawer line-item list, badge updated, zero console errors.",
         "project_version_before": 30,
         "project_version_after": 31
+      }
+    },
+    {
+      "timestamp": "2026-09-01T20:10:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "faq_icon_open_state_fix",
+      "details": {
+        "trigger": "User: FAQ expand icon does not show - (minus) sign when a question is open.",
+        "root_cause": "Icon was left as a static + character with a CSS rotate(45deg) meant to visually turn it into an x on open -- did not read as the expected minus sign.",
+        "fix": "Icon character now swaps directly based on open state (+ closed, - open), matching standard accordion convention. Removed the now-unnecessary rotate transform.",
+        "verification": "Live click test -- confirmed icon shows - only on the open item and + on all others, moves correctly between items.",
+        "project_version_before": 31,
+        "project_version_after": 32
+      }
+    },
+    {
+      "timestamp": "2026-09-01T20:20:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "faq_default_collapsed",
+      "details": {
+        "trigger": "User: by default all answers should be hidden.",
+        "change": "FAQ openIndex default changed from 0 (first question pre-opened, matching the mockup source) to -1 (all collapsed on load) per explicit user direction -- an intentional deviation from the literal mockup default.",
+        "verification": "Live check: all 6 icons show + and zero answers rendered on fresh load; clicking any question still opens exactly that one correctly.",
+        "project_version_before": 32,
+        "project_version_after": 33
+      }
+    },
+    {
+      "timestamp": "2026-09-01T20:35:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "subscription_cta_disabled_and_price_flagged",
+      "details": {
+        "trigger": "User: price does not change when switching frequency tab, and Start my subscription button still does not work.",
+        "button_fix": "Start my subscription had no real backend to submit to -- S2.4 (Recharge install + selling plan configuration) is still pending per project.json. Set to a clearly-labeled disabled state (title explains why), same honest pattern already used for the homepage pod Add to bag buttons, rather than fake a successful subscribe action. Verified live.",
+        "price_not_fixed_and_why": "The only real pricing data available (the 5-pod bundle price, 07/26) is flat regardless of shipping cadence -- this matches the mockup source itself, where price is not tied to frequency state either. Making price vary by frequency would require inventing numbers with no real source (no Recharge selling plans exist yet to pull tiered pricing from) -- flagged back to the client rather than fabricated.",
+        "project_version_before": 33,
+        "project_version_after": 34
+      }
+    },
+    {
+      "timestamp": "2026-09-01T20:50:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "subscription_cta_demo_wiring",
+      "details": {
+        "trigger": "User chose (via AskUserQuestion): Start my subscription should add a real demo product to cart to prove the click mechanism works, since the real PEARLS bundle + Recharge dont exist yet. Pricing question (different price per frequency) answered different but no dollar amounts given yet -- still waiting on real numbers, not fabricated.",
+        "fix": "Homepage loader now fetches one real available product/variant (first available, best-selling) via a new SUBSCRIPTION_DEMO_PRODUCT_QUERY, passed to SubscriptionSection as demoVariant. Start my subscription now uses the same AddToCartButton/CartForm pattern as PDP and Collection page, with a title attribute clearly explaining this is a demo (one-time add of a real but unrelated product), not a real subscription.",
+        "verification": "Live click test -- correct product/price appeared in cart drawer, badge updated, cart line removed cleanly afterward. No new server errors (confirmed via direct fetch status 200); console history showed stale 500s from an HMR race during development, not a live issue.",
+        "still_open": "Subscription pricing-per-frequency still needs real dollar amounts from the client for Monthly/Quarterly/Seasonal -- not implemented yet, will not fabricate numbers.",
+        "project_version_before": 34,
+        "project_version_after": 35
+      }
+    },
+    {
+      "timestamp": "2026-09-01T21:00:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "subscription_cta_demo_wiring_reverted",
+      "details": {
+        "trigger": "User tested the demo-product-add wiring from the previous round and correctly called it out as wrong -- a car-detailing pod subscription button adding a random snowboard to the cart looks broken to a real visitor, tooltip explanation notwithstanding.",
+        "change": "Reverted Start my subscription to a clearly-labeled disabled state (no cart action). Removed the now-dead demo-product loader query, prop threading, and unused imports (AddToCartButton, useAside) from _index.jsx cleanly rather than leaving them unreferenced.",
+        "verification": "Live check after hard reload -- button correctly disabled, page fetch 200, no error boundary.",
+        "lesson": "The users instinct here was right and mine was wrong to implement without pushing back harder -- a technically-working demo that looks broken to an end user is not actually a good outcome, even when clearly labeled. Reverted rather than defended.",
+        "project_version_before": 35,
+        "project_version_after": 36
+      }
+    },
+    {
+      "timestamp": "2026-09-01T21:15:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "pod_card_amazon_button_wrap_fix",
+      "details": {
+        "trigger": "User shared a screenshot (their own local dev server, not this sessions) showing the Tire & Wheels pod cards button area looking cut/misaligned compared to its neighbors.",
+        "root_cause": "The Buy X on Amazon link text length varies by product name (Buy Car Soap on Amazon vs Buy Interior Cleaner on Amazon) with no white-space/overflow handling -- on a narrower viewport than was tested earlier this session, a longer label could wrap to a second line while shorter ones stayed on one, pushing that one card taller/misaligned relative to its row neighbors.",
+        "fix": "Wrapped the amazon-link text in a span and added overflow:hidden;white-space:nowrap;text-overflow:ellipsis (plus min-width:0, the common flexbox truncation gotcha) so every card in the row stays exactly the same height regardless of product-name length or viewport width -- verified at a deliberately narrow 1024px width where the bug would be most likely: all 5 cards now measure an identical 43px amazon-button height, longer labels truncate with an ellipsis instead of wrapping.",
+        "scope": "Applied to both the homepage pod cards (_index.jsx) and the Collection page product cards (CollectionProductCard.jsx) for consistency, even though the latters fixed Buy on Amazon text was lower-risk.",
+        "project_version_before": 36,
+        "project_version_after": 37
+      }
+    },
+    {
+      "timestamp": "2026-09-01T22:00:00Z",
+      "actor": "orchestrator",
+      "actor_type": "agent",
+      "action": "site_content_pages_built",
+      "details": {
+        "trigger": "User: About Us, Contact Us, etc. all 404 -- build them, data from Metaobjects, design referencing Home/Product pages, then test.",
+        "scope": "Enumerated every /pages/* route actually linked from Header nav + Footer columns: about, how-it-works, contact, chemistry, car-brite, careers, press (7 total; /blogs/journal is a different resource type, not included).",
+        "metaobject_work": "Created a new site_page Metaobject definition (title, eyebrow, heading, heading_highlight, subtext, body, cta_label, cta_link -- same structured pattern as homepage_content), set Storefront access to PUBLIC_READ, created real entries for all 7 handles via Admin API scripts.",
+        "content_sourcing": "About/How it Works/Chemistry/Car Brite content is reused verbatim or lightly adapted from already-approved copy elsewhere in this build (homepage BrandSection/PodSystem/SystemRoutine, collection page AboutCollection) -- no new factual claims invented. Careers and Press have no real job openings or press mentions to source from, so those two are deliberately neutral (redirect to Contact Us) rather than fabricated.",
+        "contact_page": "Special-cased: renders the same Metaobject-driven header as every other page, plus a bespoke static contact form (name/email/message) -- not wired to a real inbox/CRM (none exists in scope), same honest non-fake-success pattern as the homepage newsletter form. Clearly noted in the UI itself.",
+        "routing": "Rewrote app/routes/pages.$handle.jsx to query the site_page Metaobject first, falling back to a native Shopify Page query (so it still works for any page created directly in Shopify Admin) before 404ing.",
+        "design": "New .site-page-* CSS added matching the established design system (navy gradient hero-edge header, section-eyebrow, hero-cta button reuse, same typography/color tokens) since no dedicated mockup exists for these pages -- referenced the homepage/PDP visual language per explicit instruction.",
+        "verification": "Live-tested all 7 pages directly (all return real content, page titles correct) plus confirmed the Header About Us nav link points at the correct real route. No console errors beyond the pre-existing unrelated Analytics consent warning.",
+        "project_version_before": 37,
+        "project_version_after": 38
       }
     }
   ],

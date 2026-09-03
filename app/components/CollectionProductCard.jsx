@@ -115,7 +115,7 @@ export function CollectionProductCard({product, index = 0, loading}) {
             href="#"
             aria-label={`Buy ${product.title} on Amazon`}
           >
-            Buy on Amazon
+            <span>Buy on Amazon</span>
           </a>
         </div>
       </div>

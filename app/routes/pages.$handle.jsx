@@ -5,25 +5,25 @@ import {redirectIfHandleIsLocalized} from '~/lib/redirect';
  * @type {Route.MetaFunction}
  */
 export const meta = ({data}) => {
-  return [{title: `Hydrogen | ${data?.page.title ?? ''}`}];
+  const title = data?.sitePage?.title ?? data?.page?.title ?? '';
+  return [{title: `PEARLS by Car Brite | ${title}`}];
 };
 
 /**
  * @param {Route.LoaderArgs} args
  */
 export async function loader(args) {
-  // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
-
-  // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
-
   return {...deferredData, ...criticalData};
 }
 
 /**
- * Load data necessary for rendering content above the fold. This is the critical data
- * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
+ * Site content pages (About, How it Works, Chemistry, Car Brite, Careers,
+ * Press, Contact) are Metaobject-driven (site_page type), matching the
+ * homepage's pattern -- structured fields, not a raw richtext blob. Falls
+ * back to a native Shopify Page (if one exists for the handle) so this
+ * route still works for any page created directly in Shopify Admin.
  * @param {Route.LoaderArgs}
  */
 async function loadCriticalData({context, request, params}) {
@@ -31,14 +31,19 @@ async function loadCriticalData({context, request, params}) {
     throw new Error('Missing page handle');
   }
 
-  const [{page}] = await Promise.all([
-    context.storefront.query(PAGE_QUERY, {
-      variables: {
-        handle: params.handle,
-      },
-    }),
-    // Add other queries here, so that they are loaded in parallel
-  ]);
+  const {metaobject: sitePage} = await context.storefront.query(SITE_PAGE_QUERY, {
+    variables: {handle: params.handle},
+  });
+
+  if (sitePage) {
+    return {sitePage: metaobjectFieldsToObject(sitePage), page: null};
+  }
+
+  // Fallback: a real Shopify Page created directly in Admin (not this
+  // project's site_page Metaobject content).
+  const {page} = await context.storefront.query(PAGE_QUERY, {
+    variables: {handle: params.handle},
+  });
 
   if (!page) {
     throw new Response('Not Found', {status: 404});
@@ -46,15 +51,18 @@ async function loadCriticalData({context, request, params}) {
 
   redirectIfHandleIsLocalized(request, {handle: params.handle, data: page});
 
-  return {
-    page,
-  };
+  return {sitePage: null, page};
 }
 
 /**
- * Load data for rendering content below the fold. This data is deferred and will be
- * fetched after the initial page load. If it's unavailable, the page should still 200.
- * Make sure to not throw any errors here, as it will cause the page to 500.
+ * @param {{fields: {key: string; value: string}[]}} metaobject
+ */
+function metaobjectFieldsToObject(metaobject) {
+  if (!metaobject) return null;
+  return Object.fromEntries(metaobject.fields.map((f) => [f.key, f.value]));
+}
+
+/**
  * @param {Route.LoaderArgs}
  */
 function loadDeferredData({context}) {
@@ -63,17 +71,103 @@ function loadDeferredData({context}) {
 
 export default function Page() {
   /** @type {LoaderReturnData} */
-  const {page} = useLoaderData();
+  const {sitePage, page} = useLoaderData();
+
+  if (page) {
+    // Native Shopify Page fallback -- unstyled richtext passthrough.
+    return (
+      <div className="page">
+        <header>
+          <h1>{page.title}</h1>
+        </header>
+        <main dangerouslySetInnerHTML={{__html: page.body}} />
+      </div>
+    );
+  }
+
+  const bodyParagraphs = (sitePage.body || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   return (
-    <div className="page">
-      <header>
-        <h1>{page.title}</h1>
+    <div className="site-page">
+      <header className="site-page-hero">
+        <div className="hero-edge" />
+        <div className="site-page-hero-inner">
+          {sitePage.eyebrow && <p className="section-eyebrow">{sitePage.eyebrow}</p>}
+          <h1>
+            {sitePage.heading}{' '}
+            {sitePage.heading_highlight && <em>{sitePage.heading_highlight}</em>}
+          </h1>
+          {sitePage.subtext && <p className="site-page-subtext">{sitePage.subtext}</p>}
+        </div>
       </header>
-      <main dangerouslySetInnerHTML={{__html: page.body}} />
+
+      {bodyParagraphs.length > 0 && (
+        <div className="site-page-body">
+          <ul>
+            {bodyParagraphs.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {sitePage.cta_label && sitePage.cta_link && (
+        <div className="site-page-cta">
+          <a className="hero-cta hero-cta-primary" href={sitePage.cta_link}>
+            {sitePage.cta_label} &rarr;
+          </a>
+        </div>
+      )}
+
+      {/* Contact Us gets a real form below the shared header/body content --
+          static per the same honest pattern as the homepage newsletter form:
+          no email/CRM backend exists to submit to yet, so it doesn't fake a
+          submission. */}
+      {sitePage.title === 'Contact Us' && <ContactForm />}
     </div>
   );
 }
+
+function ContactForm() {
+  return (
+    <div className="site-page-contact-form">
+      <form onSubmit={(e) => e.preventDefault()}>
+        <div className="contact-form-row">
+          <label htmlFor="contact-name">Name</label>
+          <input id="contact-name" name="name" type="text" required />
+        </div>
+        <div className="contact-form-row">
+          <label htmlFor="contact-email">Email</label>
+          <input id="contact-email" name="email" type="email" required />
+        </div>
+        <div className="contact-form-row">
+          <label htmlFor="contact-message">Message</label>
+          <textarea id="contact-message" name="message" rows={5} required />
+        </div>
+        <button type="submit" className="hero-cta hero-cta-primary">
+          Send message
+        </button>
+        <p className="contact-form-note">
+          This form isn&rsquo;t connected to an inbox yet — email support directly in the meantime.
+        </p>
+      </form>
+    </div>
+  );
+}
+
+const SITE_PAGE_QUERY = `#graphql
+  query SitePage($handle: String!) {
+    metaobject(handle: {type: "site_page", handle: $handle}) {
+      fields {
+        key
+        value
+      }
+    }
+  }
+`;
 
 const PAGE_QUERY = `#graphql
   query Page(
